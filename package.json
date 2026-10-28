@@ -1,0 +1,19 @@
+{
+  "name": "premiere-smart-rendering",
+  "version": "1.0.0",
+  "description": "enable smart rendering in premiere pro using ffmpeg",
+  "author": "Andrea Cuppini",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}
