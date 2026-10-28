@@ -14,7 +14,6 @@ funzionante con metadati
 
 
 
-
 ```
 ffmpeg -i "Z:\FIGHTTANK\VIDEO\20261024 - Val Cavanata\SONY DIMO\VIDEO\C0002.MP4" -ss 5.2 -t 10 -map 0:v:0 -map 0:a?  -map_metadata 0 -map_metadata:s:v 0:s:v:0 -c copy -avoid_negative_ts make_zero -movflags +faststart "C:\Users\Andrea\Desktop\tst ffmpeg\c0002.MP4"
 ```
