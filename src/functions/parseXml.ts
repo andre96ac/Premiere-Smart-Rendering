@@ -8,12 +8,19 @@ import { calcDurationSeconds, calcStartSeconds, saveJson } from "./utils.js";
 
 export async function loadXml(path: string, logJson: boolean = false): Promise<XmlPremiereFile>{
     try{
+
+        const xmlPathForceArray: string[] = [
+            "xmeml.project.children.sequence.media.video.track"
+        ]
+
+
         const xmlData = await readFile(path, "utf8");
         const parser = new XMLParser({
             ignoreAttributes: false,
             attributeNamePrefix: "@_",
             parseAttributeValue: false,
             trimValues: true,
+            isArray: (tagName, jPath, isLeafNode, isAttribute) => xmlPathForceArray.includes(jPath.toString())
         });
 
         const parsedXml: XmlPremiereFile = parser.parse(xmlData);
@@ -48,7 +55,6 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
         throw new Error("ERRORE - IL FILE XML NON CONTIENE SEQUENZE");
     }
 
-    // TODO gestire traccia singola
     const videoTracks: VideoTrack[] = sequence.media.video.track 
 
     const clipItems: SequenceClipItem[] = [];
