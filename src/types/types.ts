@@ -6,7 +6,8 @@ export type Clip = {
     filePath: string,
     startSeconds: number,
     durationSeconds: number,
-    clipCountForFile: number
+    clipCountForFile: number,
+    sequenceName: string
 }
 
 

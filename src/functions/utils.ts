@@ -83,5 +83,11 @@ export async function saveJson (myJson: object | string, logPath: string): Promi
  * @param xmlData xml di premiere
  */
 export function findFilePath(fileName: string, xmlData: XmlPremiereFile): string{
-  // TODO
+  
+  const objClip = xmlData.xmeml.project.children.clip.find(el => el.name == fileName);
+  const filePath = objClip?.media.video.track.clipitem.file.pathurl;
+  if(!filePath){
+    throw new Error(`ERRORE - PERCORSO FILE ${fileName} NON TROVATO NELL'XML`);
+  }
+  return filePath;
 }

@@ -31,7 +31,7 @@ export interface Project {
 }
 
 export interface ProjectChildren {
-  sequence: Sequence;
+  sequence: Sequence[];
   clip: MasterClip[];
 }
 

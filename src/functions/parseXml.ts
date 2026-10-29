@@ -3,14 +3,16 @@ import { readFile } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 import type { Sequence, SequenceClipItem, VideoTrack, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { convertUrlToPath } from "./convertUrlToPath.js";
-import { calcDurationSeconds, calcStartSeconds, saveJson } from "./utils.js";
+import { calcDurationSeconds, calcStartSeconds, findFilePath, saveJson } from "./utils.js";
 
 
 export async function loadXml(path: string, logJson: boolean = false): Promise<XmlPremiereFile>{
     try{
 
         const xmlPathForceArray: string[] = [
-            "xmeml.project.children.sequence.media.video.track"
+            "xmeml.project.children.sequence",
+            "xmeml.project.children.sequence.media.video.track",
+            "xmeml.project.children.sequence.media.video.track.clipitem",
         ]
 
 
@@ -25,7 +27,8 @@ export async function loadXml(path: string, logJson: boolean = false): Promise<X
 
         const parsedXml: XmlPremiereFile = parser.parse(xmlData);
         if(logJson){
-            saveJson(parsedXml);
+            // TODO Creare file configurazione JSON
+            saveJson(parsedXml, './log/generatedJSON.json');
         }
         
         return parsedXml;
@@ -50,67 +53,96 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
     }
     
     // TODO gestire più sequenze
-    const sequence: Sequence = xmlData.xmeml.project.children.sequence 
-    if(!sequence){
+    const sequences: Sequence[] = xmlData.xmeml.project.children.sequence 
+    if(!sequences || sequences.length <= 0){
         throw new Error("ERRORE - IL FILE XML NON CONTIENE SEQUENZE");
     }
 
-    const videoTracks: VideoTrack[] = sequence.media.video.track 
+    const clipItemsSequence: {sequenceName: string, clipItems: SequenceClipItem[]}[] = [];
+    let trackCount = 0;
+    let clipCount = 0;
 
-    const clipItems: SequenceClipItem[] = [];
+    sequences.forEach(sequence => {
+
+        const videoTracks: VideoTrack[] = sequence.media.video.track 
+    
+        const clipItems: SequenceClipItem[] = [];
+    
+    
+        //mi creo un elenco mettendo insieme le clip di tutte le tracce
+        videoTracks.forEach(track => {
+            trackCount ++;
+            !!track.clipitem? clipItems.push(...track.clipitem) : {}
+        })
+        clipItemsSequence.push({sequenceName: sequence.name, clipItems: clipItems});
+        clipCount += clipItems.length; 
+    })
 
 
-    //mi creo un elenco mettendo insieme le clip di tutte le tracce
-    videoTracks.forEach(track => !!track.clipitem? clipItems.push(...track.clipitem) : {})
 
 
+    console.log(`Analisi progetto completata. Rilevate ${clipItemsSequence.length} sequenze, ${trackCount} tracce, ${clipCount} clip`)
 
-
-    console.log(`Analisi progetto completata. Rilevate ${videoTracks.length} tracce, ${clipItems.length} clip`)
 
     
-    const result: Clip[] = clipItems.map(el => {  
-        const fileName = el.name;
+    const result: Clip[] = [];
+    
+    
+    clipItemsSequence.forEach(sequence => {  
+
+        const partialResult: Clip[] = sequence.clipItems.map(el => {
+            const fileName = el.name;
 
 
-        // controllo se il file è già presente in clipFileCount, se lo è aumento il contatore, altrimenti lo inserisco
-        if(clipFileCount[fileName] !== undefined){
-            clipFileCount[fileName]++;
-        }
-        else{
-            clipFileCount[fileName] = 1;
-        }
+            // controllo se il file è già presente in clipFileCount, se lo è aumento il contatore, altrimenti lo inserisco
+            if(clipFileCount[fileName] !== undefined){
+                clipFileCount[fileName]++;
+            }
+            else{
+                clipFileCount[fileName] = 1;
+            }
 
 
-        //recupero il fileUrl dalla clip e lo salvo nel registro, oppure vado a recuperarlo dal registro
-        const tempFileUrl = el.file?.pathurl;
-        if(!!tempFileUrl && !clipFilePath[fileName]){
-            clipFilePath[fileName] = tempFileUrl;
-        }
-        const finalUrl = clipFilePath[fileName];
+            //recupero il fileUrl dalla clip e lo salvo nel registro, oppure vado a recuperarlo dal registro
+            const tempFileUrl = el.file?.pathurl;
+            if(!!tempFileUrl && !clipFilePath[fileName]){
+                clipFilePath[fileName] = tempFileUrl;
+            }
+            //Il file non è ne in children>sequence>clip, ne nel registro, forse è nell'oggetto children>clip>
+            else if(!tempFileUrl && !clipFilePath[fileName]){
+                //gestiamo il caso in cui il fileurl non è contenuto nell'oggetto sequence, ma solo nell'oggetto clip. (e non è nel registro)
+                clipFilePath[fileName] = findFilePath(fileName, xmlData);// TODO
+            }
+            const finalUrl = clipFilePath[fileName];
 
 
-        if (
-                el.in === undefined || 
-                el.out === undefined || 
-                el.rate?.timebase === undefined || 
-                el.name === undefined || 
-                finalUrl === undefined
-            ) {
-            throw new Error(`Dati clip non validi o incompleti per l'elemento: ${el.name ?? 'Sconosciuto'}`);
-        }
+            if (
+                    el.in === undefined || 
+                    el.out === undefined || 
+                    el.rate?.timebase === undefined || 
+                    el.name === undefined || 
+                    finalUrl === undefined
+                ) {
+                throw new Error(`Dati clip non validi o incompleti per l'elemento: ${el.name ?? 'Sconosciuto'}`);
+            }
 
-        return {
-            startFrame: el.in, 
-            endframe: el.out, 
-            fpsTimeBase: el.rate.timebase, 
-            fileName: el.name, 
-            filePath: convertUrlToPath(finalUrl),
-            startSeconds: calcStartSeconds(el.in, el.rate.timebase),
-            durationSeconds: calcDurationSeconds(el.in, el.out, el.rate.timebase),
-            clipCountForFile: clipFileCount[el.name] ?? 1
-        }
+            return {
+                startFrame: el.in, 
+                endframe: el.out, 
+                fpsTimeBase: el.rate.timebase, 
+                fileName: el.name, 
+                filePath: convertUrlToPath(finalUrl),
+                startSeconds: calcStartSeconds(el.in, el.rate.timebase),
+                durationSeconds: calcDurationSeconds(el.in, el.out, el.rate.timebase),
+                clipCountForFile: clipFileCount[el.name] ?? 1,
+                sequenceName: sequence.sequenceName
+            }
+        })
+
+        result.push(...partialResult);
     })
+
+    console.log(result);
 
 
     return result;
