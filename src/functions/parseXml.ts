@@ -7,17 +7,21 @@ import { calcDurationSeconds, calcStartSeconds } from "./utils.js";
 
 
 export async function loadXml(path: string): Promise<XmlPremiereFile>{
- const xmlData = await readFile(path, "utf8");
- 
+    try{
+        const xmlData = await readFile(path, "utf8");
+        const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: "@_",
+            parseAttributeValue: false,
+            trimValues: true,
+        });
+    
+        return <XmlPremiereFile>parser.parse(xmlData);
+    } catch(e){
+        throw new Error(`ERRORE - FILE XML NON TROVATO`, {cause: e});
+    }
+    
 
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    attributeNamePrefix: "@_",
-    parseAttributeValue: false,
-    trimValues: true,
-  });
-
- return <XmlPremiereFile>parser.parse(xmlData);
 }
 
 export function parseXml(xmlData: XmlPremiereFile): Clip[]{
