@@ -32,32 +32,47 @@ export function calcDurationSeconds(frameIn: number, frameOut:number, timeBase: 
  * calcola il nome + percorso finale di output per il file risultante (percorso \ nome - indice di taglio estensione)
  * @param outputFolder cartella di destinazione
  * @param clip oggetto clip
+ * @param includeSequenceFolder specifica se includere nel percorso finale anche la sottocartella con il nome della sequenza;
  * @returns 
  */
-export function calcFinalFileName(outputFolder: string, clip: Clip): string{
+export function calcFinalFileName(outputFolder: string, clip: Clip, includeSequenceFolder: boolean): string{
 
     //togliamo estensione e teniamola a parte
     const splitFileName = clip.fileName.split('.');
     const extension = splitFileName.pop();
     const finalFileName = `${splitFileName.flat()}-${clip.clipCountForFile}.${extension}`;
-    const finalPath = `${outputFolder}\\${finalFileName}`
+    const finalPath = includeSequenceFolder? `${outputFolder}\\${clip.sequenceName}\\${finalFileName}` : `${outputFolder}\\${finalFileName}`
 
     console.log("NOME DI OUTPUT CALCOLATO: "+ finalPath)
     return finalPath;
 }
 
 /**
- * controlla se un file esiste su disco
+ * controlla se un file o directory esiste su disco
  * @param path percorso file incluso nome
  * @returns 
  */
-export async function fileExists(path: string): Promise<boolean> {
+export async function existOnFileSystem(path: string): Promise<boolean> {
   try {
     await access(path, constants.F_OK);
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Crea su filesystem la cartella in cui inserire i video tagliati per la sequenza, solo se la cartella non esiste
+ * @param clip 
+ * @param baseOutputFolder 
+ */
+export async function createSequenceDir(clip: Clip, baseOutputFolder: string): Promise<void>{
+  const pathToCreate = `${baseOutputFolder}\\${clip.sequenceName}`;
+  const pathAlreadyExistOnFs = await existOnFileSystem(pathToCreate)
+  if(!pathAlreadyExistOnFs){
+    await mkdir(pathToCreate, { recursive: true });
+  }
+
 }
 
 

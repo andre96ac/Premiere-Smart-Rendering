@@ -1,7 +1,7 @@
 
 import { spawn } from "node:child_process";
 import type { Clip, FfmpegResult } from "../types/types.js";
-import { calcFinalFileName, fileExists } from "./utils.js";
+import { calcFinalFileName, createSequenceDir, existOnFileSystem } from "./utils.js";
 
 
 function _runFfmpeg(
@@ -45,32 +45,24 @@ function _runFfmpeg(
 // export function runFfmpeg(ffmpegPath: string, sourcePath: string, outputPath:string, startSeconds: number, durationSeconds: number, overwrite?: boolean): Promise<FfmpegResult>
 // export function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: Clip, overwrite?: boolean): Promise<FfmpegResult>
 
-
-export async function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: Clip, overwrite: boolean = true,): Promise<FfmpegResult>{
-
-    // //caso stringhe
-    // if(typeof(clip) == "string"){
-
-    //     args = [
-    //         "-hide_banner",
-    //         "-y",
-    //         "-i", outputFolder,
-    //         "-ss", String(startSeconds),
-    //         "-t", String(durationSeconds),
-    //         "-map", "0:v:0",
-    //         "-map", "0:a?",
-    //         "-map_metadata", "0",
-    //         "-c", "copy",
-    //         "-avoid_negative_ts", "make_zero",
-    //         "-movflags", "+faststart",
-    //         clip,
-    //     ];
-    // }
+/**
+ * Esegue il taglio della clip passata e crea il nuovo file
+ * @param ffmpegPath percorso eseguibile ffmpeg
+ * @param baseOutputFolder cartella di base in cui inserire il video tagliato
+ * @param clip elemnto clip
+ * @param overwrite specifica se sovrascrivere o skippare file eventualmente presenti
+ * @param separateSequences specifica se salvare i file in sottocartelle diverse per ogni sequenza
+ * @returns 
+ */
+export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, clip: Clip, overwrite: boolean = true, separateSequences: boolean): Promise<FfmpegResult>{
 
 
-    //caso oggetto clip
+        if(separateSequences){
+          //se siamo in modalità cartelle separate, creo prima la cartella
+          await createSequenceDir(clip, baseOutputFolder);
+        }
 
-        const finalFileName = calcFinalFileName(outputFolder, clip);
+        const finalFileName = calcFinalFileName(baseOutputFolder, clip, separateSequences);
         const argOverwrite = overwrite? '-y' : '-n';
         const args = [
             "-hide_banner",
@@ -87,7 +79,7 @@ export async function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: 
             finalFileName,
         ];
 
-        const fileExist = await(fileExists(finalFileName));
+        const fileExist = await(existOnFileSystem(finalFileName));
         if(!fileExist){
             return _runFfmpeg(args, ffmpegPath)
         }

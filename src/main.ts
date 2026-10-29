@@ -16,7 +16,8 @@ async function main(){
     const finalData = parseXml(data);
 
     for (const clip of finalData) {
-        await runFfmpeg(ffmpegPath, outputFolder, clip, true);
+        // TODO inserire overwrite e separatesequences in oggetto configurazione
+        await runFfmpeg(ffmpegPath, outputFolder, clip, true, true);
     }
 
   
