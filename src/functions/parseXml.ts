@@ -6,7 +6,7 @@ import { convertUrlToPath } from "./convertUrlToPath.js";
 import { calcDurationSeconds, calcStartSeconds, findFilePath, saveJson } from "./utils.js";
 
 
-export async function loadXml(path: string, logJson: boolean = false): Promise<XmlPremiereFile>{
+export async function loadXml(path: string): Promise<XmlPremiereFile>{
     try{
 
         const xmlPathForceArray: string[] = [
@@ -26,10 +26,7 @@ export async function loadXml(path: string, logJson: boolean = false): Promise<X
         });
 
         const parsedXml: XmlPremiereFile = parser.parse(xmlData);
-        if(logJson){
-            // TODO Creare file configurazione JSON
-            saveJson(parsedXml, './log/generatedJSON.json');
-        }
+       
         
         return parsedXml;
     } catch(e){
@@ -52,7 +49,6 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
         throw new Error("ERRORE - FILE XML INCOMPLETO O CORROTTO. Verificare di aver esportato l'xml completo del progetto, e non della singola sequenza");
     }
     
-    // TODO gestire più sequenze
     const sequences: Sequence[] = xmlData.xmeml.project.children.sequence 
     if(!sequences || sequences.length <= 0){
         throw new Error("ERRORE - IL FILE XML NON CONTIENE SEQUENZE");
@@ -111,7 +107,7 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
             //Il file non è ne in children>sequence>clip, ne nel registro, forse è nell'oggetto children>clip>
             else if(!tempFileUrl && !clipFilePath[fileName]){
                 //gestiamo il caso in cui il fileurl non è contenuto nell'oggetto sequence, ma solo nell'oggetto clip. (e non è nel registro)
-                clipFilePath[fileName] = findFilePath(fileName, xmlData);// TODO
+                clipFilePath[fileName] = findFilePath(fileName, xmlData);
             }
             const finalUrl = clipFilePath[fileName];
 
