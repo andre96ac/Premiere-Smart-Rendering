@@ -1,7 +1,7 @@
 
 import { spawn } from "node:child_process";
 import type { Clip, FfmpegResult } from "../types/types.js";
-import { calcFinalFileName } from "./utils.js";
+import { calcFinalFileName, fileExists } from "./utils.js";
 
 
 function _runFfmpeg(
@@ -42,57 +42,68 @@ function _runFfmpeg(
   });
 }
 
-export function runFfmpeg(ffmpegPath: string, sourcePath: string, outputPath:string, startSeconds: number, durationSeconds: number): Promise<FfmpegResult>
-export function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: Clip): Promise<FfmpegResult>
+// export function runFfmpeg(ffmpegPath: string, sourcePath: string, outputPath:string, startSeconds: number, durationSeconds: number, overwrite?: boolean): Promise<FfmpegResult>
+// export function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: Clip, overwrite?: boolean): Promise<FfmpegResult>
 
 
-export function runFfmpeg(ffmpegPath: string, arg2: string, arg3: string | Clip, startSeconds?: number, durationSeconds?: number): Promise<FfmpegResult>{
-    let args: string[];
+export async function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: Clip, overwrite: boolean = true,): Promise<FfmpegResult>{
 
-    //caso stringhe
-    if(typeof(arg3) == "string"){
+    // //caso stringhe
+    // if(typeof(clip) == "string"){
 
-        args = [
-            "-hide_banner",
-            "-y",
-            "-i", arg2,
-            "-ss", String(startSeconds),
-            "-t", String(durationSeconds),
-            "-map", "0:v:0",
-            "-map", "0:a?",
-            "-map_metadata", "0",
-            "-c", "copy",
-            "-avoid_negative_ts", "make_zero",
-            "-movflags", "+faststart",
-            arg3,
-        ];
-    }
+    //     args = [
+    //         "-hide_banner",
+    //         "-y",
+    //         "-i", outputFolder,
+    //         "-ss", String(startSeconds),
+    //         "-t", String(durationSeconds),
+    //         "-map", "0:v:0",
+    //         "-map", "0:a?",
+    //         "-map_metadata", "0",
+    //         "-c", "copy",
+    //         "-avoid_negative_ts", "make_zero",
+    //         "-movflags", "+faststart",
+    //         clip,
+    //     ];
+    // }
 
 
     //caso oggetto clip
-    else if(typeof(arg3) == "object"){
 
+        const finalFileName = calcFinalFileName(outputFolder, clip);
         
-        args = [
+        const args = [
             "-hide_banner",
             "-y",
-            "-i", arg3.filePath,
-            "-ss", String(arg3.startSeconds),
-            "-t", String(arg3.durationSeconds),
+            "-i", clip.filePath,
+            "-ss", String(clip.startSeconds),
+            "-t", String(clip.durationSeconds),
             "-map", "0:v:0",
             "-map", "0:a?",
             "-map_metadata", "0",
             "-c", "copy",
             "-avoid_negative_ts", "make_zero",
             "-movflags", "+faststart",
-            calcFinalFileName(arg2, arg3),
+            finalFileName,
         ];
-    }
-    else{
-        throw new Error(`Errore nella chiamata ad FFMPEG`);
-    }
 
-        return _runFfmpeg(args, ffmpegPath)
+        const fileExist = await(fileExists(finalFileName));
+        if(!fileExist){
+            return _runFfmpeg(args, ffmpegPath)
+        }
+        else{
+            if(overwrite){
+                console.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
+                return _runFfmpeg(args, ffmpegPath)
+            }
+            else{
+                console.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SKIPPATO`);
+                return {
+                        exitCode: 0,
+                        stderr: '',
+                        };
+            }
+        }
 
 }
 
