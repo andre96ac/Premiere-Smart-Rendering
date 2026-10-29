@@ -33,9 +33,16 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
     //oggetto che si segna il primo percorso che trova per ogni clip, visto che nei riferimenti successivi i percorsi non ci sono
     const clipFilePath: Record<string, string> = {}
 
-    // TODO gestire xml non corretto per mancanza di children (export xml solo sequenza e non intero progetto)
+    if(!xmlData || !xmlData.xmeml || !xmlData.xmeml.project || !xmlData.xmeml.project.children){
+        throw new Error("ERRORE - FILE XML INCOMPLETO O CORROTTO. Verificare di aver esportato l'xml completo del progetto, e non della singola sequenza");
+    }
+    
     // TODO gestire più sequenze
     const sequence: Sequence = xmlData.xmeml.project.children.sequence 
+    if(!sequence){
+        throw new Error("ERRORE - IL FILE XML NON CONTIENE SEQUENZE");
+    }
+
     // TODO gestire traccia singola
     const videoTracks: VideoTrack[] = sequence.media.video.track 
 

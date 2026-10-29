@@ -15,7 +15,7 @@ async function main(){
     const finalData = parseXml(data);
 
     for (const clip of finalData) {
-        await runFfmpeg(ffmpegPath, outputFolder, clip, false);
+        await runFfmpeg(ffmpegPath, outputFolder, clip, true);
     }
 
   
