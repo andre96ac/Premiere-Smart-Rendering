@@ -71,10 +71,10 @@ export async function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: 
     //caso oggetto clip
 
         const finalFileName = calcFinalFileName(outputFolder, clip);
-        
+        const argOverwrite = overwrite? '-y' : '-n';
         const args = [
             "-hide_banner",
-            "-y",
+            argOverwrite,
             "-i", clip.filePath,
             "-ss", String(clip.startSeconds),
             "-t", String(clip.durationSeconds),
