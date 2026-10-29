@@ -40,27 +40,13 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
     videoTracks.forEach(track => !!track.clipitem? clipItems.push(...track.clipitem) : {})
 
 
-    clipItems.forEach(el => {
-        if(!!el.name){
-            const fileUrl = el.file?.pathurl;
-            if(!!fileUrl && !clipFilePath[el.name]){
-                clipFilePath[el.name] = fileUrl;
-            }
-            
-        }
-        else{
-            throw new Error(`Dati clip non validi o incompleti per l'elemento: ${el.name ?? 'Sconosciuto'}`);
-        }
 
-
-    })
 
     console.log(`Analisi progetto completata. Rilevate ${videoTracks.length} tracce, ${clipItems.length} clip`)
 
     
     const result: Clip[] = clipItems.map(el => {  
         const fileName = el.name;
-        const fileUrl = clipFilePath[fileName];
 
 
         // controllo se il file è già presente in clipFileCount, se lo è aumento il contatore, altrimenti lo inserisco
@@ -72,12 +58,20 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
         }
 
 
+        //recupero il fileUrl dalla clip e lo salvo nel registro, oppure vado a recuperarlo dal registro
+        const tempFileUrl = el.file?.pathurl;
+        if(!!tempFileUrl && !clipFilePath[fileName]){
+            clipFilePath[fileName] = tempFileUrl;
+        }
+        const finalUrl = clipFilePath[fileName];
+
+
         if (
                 el.in === undefined || 
                 el.out === undefined || 
                 el.rate?.timebase === undefined || 
                 el.name === undefined || 
-                fileUrl === undefined
+                finalUrl === undefined
             ) {
             throw new Error(`Dati clip non validi o incompleti per l'elemento: ${el.name ?? 'Sconosciuto'}`);
         }
@@ -87,7 +81,7 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
             endframe: el.out, 
             fpsTimeBase: el.rate.timebase, 
             fileName: el.name, 
-            filePath: convertUrlToPath(fileUrl),
+            filePath: convertUrlToPath(finalUrl),
             startSeconds: calcStartSeconds(el.in, el.rate.timebase),
             durationSeconds: calcDurationSeconds(el.in, el.out, el.rate.timebase),
             clipCountForFile: clipFileCount[el.name] ?? 1
