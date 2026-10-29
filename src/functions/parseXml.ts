@@ -29,8 +29,10 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
     //oggetto che si segna il primo percorso che trova per ogni clip, visto che nei riferimenti successivi i percorsi non ci sono
     const clipFilePath: Record<string, string> = {}
 
+    // TODO gestire xml non corretto per mancanza di children (export xml solo sequenza e non intero progetto)
     // TODO gestire più sequenze
     const sequence: Sequence = xmlData.xmeml.project.children.sequence 
+    // TODO gestire traccia singola
     const videoTracks: VideoTrack[] = sequence.media.video.track 
 
     const clipItems: SequenceClipItem[] = [];

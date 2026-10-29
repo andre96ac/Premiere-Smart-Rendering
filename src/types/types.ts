@@ -8,3 +8,9 @@ export type Clip = {
     durationSeconds: number,
     clipCountForFile: number
 }
+
+
+export type FfmpegResult = {
+  exitCode: number;
+  stderr: string;
+};
