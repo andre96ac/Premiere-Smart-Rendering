@@ -79,14 +79,15 @@ export async function createSequenceDir(clip: Clip, baseOutputFolder: string): P
 /**
  * salva un json su file (x debug)
  * @param myJson json da salvare
- * @param logPath percorso incluso nome file
+ * @param logFolder percorso escluso nome file
+ * @param fileName nome file
  */
-export async function saveJson (myJson: object | string, logPath: string): Promise<void>{
+export async function saveJson (myJson: object | string, logFolder: string, fileName: string = 'data.json'): Promise<void>{
   
-  const logFolder = path.dirname(logPath);
 
   await mkdir(logFolder, {recursive: true})
 
+  const logPath = `${logFolder}\\${fileName}`
   let finalJson: string = typeof(myJson) == 'object'? JSON.stringify(myJson) : myJson;
   await writeFile(logPath, finalJson);
  

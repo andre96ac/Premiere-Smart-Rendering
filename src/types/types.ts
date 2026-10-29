@@ -15,3 +15,14 @@ export type FfmpegResult = {
   exitCode: number;
   stderr: string;
 };
+
+
+export type AppConfig = {
+  enableLog: boolean,
+  premiereXmlPath: string,
+  outputFolder: string,
+  ffmpegExePath: string,
+  logFilesPath: string,
+   overWriteFiles: boolean,
+  separateSequences: boolean
+}

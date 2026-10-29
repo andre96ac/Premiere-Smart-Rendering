@@ -1,35 +1,37 @@
 import { runFfmpeg } from "./functions/ffmpeg.js";
 import { loadXml, parseXml } from "./functions/parseXml.js";
 import { saveJson } from "./functions/utils.js";
+import type { AppConfig } from "./types/types.js";
 
-// TODO Parametrizzare tutto
-const xmlPath = "C:\\Users\\Andrea\\Desktop\\test transcodifica original\\test transcodifica.xml"
-// TODO gestire cartella inesistente (magari con scelata percorso tramite finestra di dialogo nativa in windows)
-const outputFolder = "C:\\Users\\Andrea\\Desktop\\tst ffmpeg"
-// TODO gestire ffmpeg e packetizzare con exe
-const ffmpegPath = "D:\\Programmi\\FFmpeg\\ffmpeg.exe"
-const logJsonPath = './log/generatedJSON.json'
-
-const logJson: boolean = true;
+import _appConfig from "./appConfig.json" with {type: "json"};
+import { loadConfig } from "./functions/appConfig.js";
 
 
-async function main(){
-    const data = await loadXml(xmlPath);
 
-     if(logJson){
-        saveJson(data, logJsonPath);
+async function init(): Promise<AppConfig>{
+    const configUrl = "./dist/appConfig.json";
+    const config: AppConfig = await loadConfig(configUrl)
+    return config
+}
+
+async function main(appConfig: AppConfig){
+    const data = await loadXml(appConfig.premiereXmlPath);
+
+     if(appConfig.enableLog){
+        saveJson(data, appConfig.logFilesPath);
     }
 
     const finalData = parseXml(data);
 
     for (const clip of finalData) {
-        // TODO inserire overwrite e separatesequences in oggetto configurazione
-        await runFfmpeg(ffmpegPath, outputFolder, clip, true, true);
+        await runFfmpeg(appConfig.ffmpegExePath, appConfig.outputFolder, clip, appConfig.overWriteFiles, appConfig.separateSequences);
     }
 
   
 
 }
 
+init()
+.then(config => main(config))
+.catch(err => console.warn(err))
 
-main().catch(err => console.warn(err))
