@@ -1,5 +1,6 @@
-import { access, constants } from "fs/promises";
+import { access, constants, mkdir, writeFile } from "fs/promises";
 import type { Clip } from "../types/types.js";
+import path from "path";
 
 export function calcStartSeconds(frameIn: number, timeBase: number): number{
     return frameIn/timeBase;
@@ -29,4 +30,15 @@ export async function fileExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function saveJson (myJson: object | string, logPath: string = './log/generatedJSON.json'): Promise<void>{
+  
+  const logFolder = path.dirname(logPath);
+
+  await mkdir(logFolder, {recursive: true})
+
+  let finalJson: string = typeof(myJson) == 'object'? JSON.stringify(myJson) : myJson;
+  await writeFile(logPath, finalJson);
+ 
 }

@@ -3,10 +3,10 @@ import { readFile } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 import type { Sequence, SequenceClipItem, VideoTrack, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { convertUrlToPath } from "./convertUrlToPath.js";
-import { calcDurationSeconds, calcStartSeconds } from "./utils.js";
+import { calcDurationSeconds, calcStartSeconds, saveJson } from "./utils.js";
 
 
-export async function loadXml(path: string): Promise<XmlPremiereFile>{
+export async function loadXml(path: string, logJson: boolean = false): Promise<XmlPremiereFile>{
     try{
         const xmlData = await readFile(path, "utf8");
         const parser = new XMLParser({
@@ -15,8 +15,13 @@ export async function loadXml(path: string): Promise<XmlPremiereFile>{
             parseAttributeValue: false,
             trimValues: true,
         });
-    
-        return <XmlPremiereFile>parser.parse(xmlData);
+
+        const parsedXml: XmlPremiereFile = parser.parse(xmlData);
+        if(logJson){
+            saveJson(parsedXml);
+        }
+        
+        return parsedXml;
     } catch(e){
         throw new Error(`ERRORE - FILE XML NON TROVATO`, {cause: e});
     }

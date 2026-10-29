@@ -8,9 +8,11 @@ const outputFolder = "C:\\Users\\Andrea\\Desktop\\tst ffmpeg"
 // TODO gestire ffmpeg e packetizzare con exe
 const ffmpegPath = "D:\\Programmi\\FFmpeg\\ffmpeg.exe"
 
+const logJson: boolean = true;
+
 
 async function main(){
-    const data = await loadXml(xmlPath);
+    const data = await loadXml(xmlPath, logJson);
     const finalData = parseXml(data);
 
     for (const clip of finalData) {
