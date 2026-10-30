@@ -8,15 +8,53 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/core/main.js",
-    "start:app": "npm run build && electron ."
+    "start:app": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:portable": "npm run build && electron-builder --win portable"
+
   },
   "dependencies": {
     "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "builder": "^5.0.0",
     "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
     "typescript": "^7.0.2"
+  },
+
+   "build": {
+    "appId": "com.andreacuppini.premieresmartrendering",
+    "productName": "Premiere Smart Rendering",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/electron/**/*",
+      "src/renderer/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/ffmpeg",
+        "to": "ffmpeg",
+        "filter": [
+          "ffmpeg.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
