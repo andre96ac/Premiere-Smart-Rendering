@@ -1,8 +1,11 @@
-
 const version = document.getElementById("version");
 
 const xmlPath = document.getElementById("xmlPath");
 const outputPath = document.getElementById("outputPath");
+
+const enableLog = document.getElementById("enableLog");
+const overWriteFiles = document.getElementById("overWriteFiles");
+const separateSequences = document.getElementById("separateSequences");
 
 const startButton = document.getElementById("startRendering");
 const status = document.getElementById("status");
@@ -49,6 +52,27 @@ document
         }
     });
 
-startButton.addEventListener("click", () => {
-    status.textContent = "Rendering non ancora collegato";
+startButton.addEventListener("click", async () => {
+    const options = {
+        xmlPath: xmlPath.value,
+        outputPath: outputPath.value,
+        enableLog: enableLog.checked,
+        overWriteFiles: overWriteFiles.checked,
+        separateSequences: separateSequences.checked
+    };
+
+    startButton.disabled = true;
+    status.textContent = "Rendering in corso...";
+
+    try {
+        await window.electronAPI.startRendering(options);
+
+        status.textContent = "Rendering completato!";
+    } catch (error) {
+        status.textContent = `Errore durante il rendering: ${error.message}`;
+    } finally {
+        updateStartButton();
+    }
 });
+
+updateStartButton();
