@@ -85,10 +85,14 @@ export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, cl
         }
         else{
             if(overwrite){
+                //TODO implementare classe log con scrittura file + terminale
+
                 console.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
                 return _runFfmpeg(args, ffmpegPath)
             }
             else{
+                //TODO implementare classe log con scrittura file + terminale
+
                 console.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SKIPPATO`);
                 return {
                         exitCode: 0,

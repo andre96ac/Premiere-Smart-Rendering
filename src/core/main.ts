@@ -16,6 +16,7 @@ async function init(): Promise<void>{
 }
 
 init().catch((error: unknown) => {
+    //TODO implementare classe log con scrittura file + terminale
     console.error("Application error:", error);
     process.exitCode = 1;
 });

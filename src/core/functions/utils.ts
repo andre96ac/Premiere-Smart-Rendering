@@ -43,6 +43,7 @@ export function calcFinalFileName(outputFolder: string, clip: Clip, includeSeque
     const finalFileName = `${splitFileName.flat()}-${clip.clipCountForFile}.${extension}`;
     const finalPath = includeSequenceFolder? `${outputFolder}\\${clip.sequenceName}\\${finalFileName}` : `${outputFolder}\\${finalFileName}`
 
+    //TODO implementare classe log con scrittura file + terminale
     console.log("NOME DI OUTPUT CALCOLATO: "+ finalPath)
     return finalPath;
 }

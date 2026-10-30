@@ -77,6 +77,8 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
 
 
 
+    //TODO implementare classe log con scrittura file + terminale
+
     console.log(`Analisi progetto completata. Rilevate ${clipItemsSequence.length} sequenze, ${trackCount} tracce, ${clipCount} clip`)
 
 
@@ -137,6 +139,8 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
 
         result.push(...partialResult);
     })
+
+    //TODO implementare classe log con scrittura file + terminale
 
     console.log(result);
 
