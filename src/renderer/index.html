@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Premiere Smart Rendering</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <header class="header">
+            <h1>Premiere Smart Rendering</h1>
+            <p>Smart rendering per Adobe Premiere Pro</p>
+        </header>
+
+        <section class="panel">
+
+            <h2>Configurazione</h2>
+
+            <div class="field">
+
+                <label for="xmlPath">
+                    File XML di Premiere
+                </label>
+
+                <div class="file-row">
+                    <input
+                        type="text"
+                        id="xmlPath"
+                        readonly
+                        placeholder="Seleziona il file XML"
+                    >
+
+                    <button id="selectXml">
+                        Sfoglia
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="field">
+
+                <label for="outputPath">
+                    Cartella di destinazione
+                </label>
+
+                <div class="file-row">
+                    <input
+                        type="text"
+                        id="outputPath"
+                        readonly
+                        placeholder="Seleziona la cartella"
+                    >
+
+                    <button id="selectOutput">
+                        Sfoglia
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="panel">
+
+            <h2>Opzioni</h2>
+
+            <label class="option">
+                <input type="checkbox" id="enableLog">
+                Abilita log
+            </label>
+
+            <label class="option">
+                <input type="checkbox" id="overWriteFiles">
+                Sovrascrivi file esistenti
+            </label>
+
+            <label class="option">
+                <input type="checkbox" id="separateSequences">
+                Separa le sequenze
+            </label>
+
+        </section>
+
+        <section class="panel">
+
+            <h2>Rendering</h2>
+
+            <button
+                id="startRendering"
+                class="primary"
+                disabled
+            >
+                Avvia rendering
+            </button>
+
+            <div class="status-container">
+                <p id="status">
+                    In attesa di configurazione
+                </p>
+            </div>
+
+        </section>
+
+        <footer>
+            <span id="version"></span>
+        </footer>
+
+    </main>
+
+    <script src="renderer.js"></script>
+
+</body>
+</html>

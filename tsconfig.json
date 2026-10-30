@@ -44,5 +44,14 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "include": [
+    "src/core/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/electron",
+    "src/renderer"
+  ]
 }

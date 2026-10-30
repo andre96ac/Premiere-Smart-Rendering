@@ -10,7 +10,7 @@ import { runProject } from "./runProject.js";
 
 
 async function init(): Promise<void>{
-    const configUrl = "./dist/appConfig.json";
+    const configUrl = "./dist/core/appConfig.json";
     const config = await loadConfig(configUrl);
     await runProject(config);
 }

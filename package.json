@@ -4,16 +4,19 @@
   "description": "enable smart rendering in premiere pro using ffmpeg",
   "author": "Andrea Cuppini",
   "type": "module",
-  "main": "main.js",
+  "main": "src/electron/main.mjs",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "node dist/core/main.js",
+    "start:app": "npm run build && electron ."
   },
   "dependencies": {
     "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "builder": "^5.0.0",
+    "electron": "^45.1.0",
     "typescript": "^7.0.2"
   }
 }
