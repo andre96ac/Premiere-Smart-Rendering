@@ -1,174 +1,473 @@
-# Premiere Smart Cut — Documento tecnico
+# Premiere Smart Rendering — Documento tecnico
 
-**Versione:** 1.0  
-**Data:** 29 ottobre 2026  
-**Stato:** Core in sviluppo, parsing XML e invocazione FFmpeg funzionanti.
+**Versione:** 2.0
+
+**Data:** 30 ottobre 2026
+
+**Stato:** Core CLI implementato. Parsing XML di Premiere Pro, conversione dei percorsi, calcolo dei segmenti, configurazione JSON e invocazione di FFmpeg sono presenti nel codice. La validazione della configurazione, la gestione robusta degli errori e la verifica automatica dei file generati richiedono ulteriori sviluppi.
+
+---
 
 ## 1. Obiettivo del progetto
 
-Realizzare un programma Windows che estragga automaticamente i segmenti utili dai video montati in Adobe Premiere Pro, eliminando le parti inutilizzate senza ricodificare il video.
+Premiere Smart Rendering è un programma per Windows progettato per estrarre automaticamente i segmenti utilizzati in un progetto Adobe Premiere Pro, generando un file video separato per ogni clip individuata nell'XML esportato da Premiere.
 
-Il programma deve:
+L'elaborazione video viene eseguita tramite FFmpeg, utilizzando la modalità stream copy per evitare la ricodifica dei flussi audio e video.
 
-- Leggere un XML esportato da Premiere Pro.
-- Identificare i segmenti utilizzati nella sequenza.
-- Recuperare sorgente, punti IN/OUT e informazioni temporali.
-- Convertire i percorsi URI dell'XML in percorsi Windows.
-- Invocare FFmpeg per creare un file per ogni taglio.
-- Preservare la qualità originale tramite stream copy.
-- Verificare i file generati.
-- Evitare sovrascritture accidentali e gestire gli errori.
-- Essere eventualmente distribuito come applicazione Windows senza richiedere Node.js installato.
+L'obiettivo è ottenere segmenti utilizzabili nei flussi di lavoro di post-produzione, mantenendo la qualità dei flussi codificati originali ed evitando di dover esportare manualmente ogni singolo taglio da Premiere.
 
-## 2. Ambiente di lavoro
+Il programma è attualmente organizzato come applicazione CLI basata su TypeScript e Node.js.
 
-### Software
+### Funzionalità presenti
 
-- Sistema operativo: Windows.
-- Adobe Premiere Pro 2024.4.
-- Linguaggio: TypeScript.
-- Runtime: Node.js.
-- Elaborazione video: FFmpeg.
-- Verifica dei media: FFprobe.
-- Parsing XML: `fast-xml-parser`.
-- Moduli: ES Modules, con `module: "NodeNext"` e `moduleResolution: "NodeNext"`.
+- Lettura di un file XML esportato da Premiere Pro.
+- Parsing XML tramite `fast-xml-parser`.
+- Identificazione delle sequenze e delle tracce video.
+- Raccolta delle clip presenti nelle tracce video.
+- Recupero dei percorsi dei media dalle informazioni XML.
+- Conversione degli URL `file://` in percorsi utilizzabili da Windows.
+- Calcolo del tempo iniziale e della durata di ciascun segmento.
+- Generazione di nomi di output con indice progressivo per nome di file.
+- Creazione opzionale di sottocartelle per sequenza.
+- Configurazione tramite file JSON.
+- Invocazione di FFmpeg mediante `spawn()`.
+- Gestione della sovrascrittura o dello skip dei file già esistenti.
+- Salvataggio opzionale dei dati XML analizzati in formato JSON.
+- Elaborazione sequenziale delle clip.
 
-### Caratteristiche dei video sorgente
+### Funzionalità ancora da consolidare
 
-Telecamera: Sony A7 IV.
+- Validazione effettiva della configurazione.
+- Gestione dettagliata degli errori di filesystem e dei processi esterni.
+- Verifica automatica dei file generati tramite FFprobe.
+- Validazione sistematica della precisione dei tagli.
+- Gestione di nomi di sequenza e file contenenti caratteri problematici.
+- Report finale dei segmenti completati, saltati e falliti.
+- Gestione dell'interruzione dell'elaborazione.
+- Distribuzione autonoma per Windows senza dipendenze esterne da installare manualmente.
 
-- Codec: H.264 / AVC, profilo High 4:2:2 Intra.
-- Contenitore: MP4, brand `XAVC`.
-- Risoluzione: 3840 × 2160.
-- Frame rate: 60000/1001, circa 59,94 fps.
-- Profondità colore: 10 bit.
-- Chroma subsampling: 4:2:2.
-- Formato pixel: `yuv422p10le`.
-- Profilo colore: Sony S-Log3 / S-Gamut3.Cine.
-- Audio: PCM 16 bit, 48 kHz, stereo.
-- Traccia dati Sony aggiuntiva: `rtmd`.
+---
 
-## 3. Struttura prevista del progetto
+## 2. Ambiente e tecnologie
+
+### 2.1 Software e librerie
+
+| Componente | Utilizzo |
+|---|---|
+| Sistema operativo di riferimento | Windows |
+| Adobe Premiere Pro | Software di montaggio da cui proviene l'XML |
+| TypeScript | Linguaggio del progetto |
+| Node.js | Runtime |
+| FFmpeg | Estrazione dei segmenti video |
+| fast-xml-parser | Parsing dell'XML |
+| `node:fs/promises` | Lettura e scrittura dei file e operazioni sul filesystem |
+| `node:child_process` | Avvio di FFmpeg tramite `spawn()` |
+| `node:url` | Conversione degli URL file in percorsi locali |
+
+La presenza e le versioni esatte delle dipendenze devono essere confermate consultando il `package.json` completo, non incluso nel materiale analizzato.
+
+### 2.2 Moduli ES
+
+Il codice utilizza import ES Modules e specifica l'estensione `.js` negli import locali, per esempio:
+
+```typescript
+import { runFfmpeg } from "./functions/ffmpeg.js";
+import type { Clip } from "./types/types.js";
+```
+
+Questa convenzione è coerente con un progetto TypeScript compilato per un ambiente Node.js che utilizza moduli ES.
+
+La configurazione completa del compilatore non è disponibile nel materiale analizzato.
+
+---
+
+## 3. Struttura del progetto
+
+La struttura dei sorgenti e gli elementi visibili nell'albero del progetto sono i seguenti:
 
 ```text
-premiere-smart-cut/
-├── src/
-│   ├── index.ts
+Premiere Smart Rendering/
+├── dist/
+│   ├── functions/
 │   ├── types/
-│   │   └── segment.ts
-│   └── core/
-│       ├── readXml.ts
-│       ├── processSegment.ts
-│       └── runFfmpeg.ts
+│   ├── appConfig.json
+│   ├── main.d.ts
+│   ├── main.d.ts.map
+│   ├── main.js
+│   ├── main.js.map
+│   ├── types.d.ts
+│   ├── types.d.ts.map
+│   ├── types.js
+│   └── types.js.map
+├── doc/
+│   ├── appunti-progetto.md
+│   └── comandi-ffmpeg.md
+├── log/
+│   └── data.json
+├── node_modules/
+├── src/
+│   ├── functions/
+│   │   ├── appConfig.ts
+│   │   ├── convertUrlToPath.ts
+│   │   ├── ffmpeg.ts
+│   │   ├── parseXml.ts
+│   │   └── utils.ts
+│   ├── types/
+│   │   ├── types.ts
+│   │   └── xmlPremiereFile.ts
+│   ├── appConfig.json
+│   └── main.ts
+├── .gitignore
+├── package-lock.json
 ├── package.json
-├── tsconfig.json
-└── dist/
+├── readme.md
+└── tsconfig.json
 ```
 
-La struttura può essere ampliata in seguito. La priorità è mantenere il core indipendente dall'interfaccia utente, così da poterlo riutilizzare in una futura GUI Electron.
+**Nota:** lo ZIP contiene esclusivamente la cartella `src/`. Gli altri elementi sono riportati sulla base dello screenshot. Non è stato possibile verificarne il contenuto interno, né confermare che tutti i file compilati in `dist/` corrispondano esattamente ai sorgenti attuali.
 
-## 4. Configurazione TypeScript
+### 3.1 `src/main.ts`
 
-Configurazione di riferimento per `tsconfig.json`:
+Punto d'ingresso dell'applicazione.
+
+Responsabilità:
+
+- Caricamento della configurazione.
+- Lettura dell'XML di Premiere.
+- Salvataggio opzionale dei dati XML in JSON.
+- Parsing delle sequenze e generazione dell'array di clip.
+- Elaborazione sequenziale delle clip tramite FFmpeg.
+- Gestione degli errori non intercettati dal flusso principale.
+
+### 3.2 `src/functions/appConfig.ts`
+
+Contiene la funzione `loadConfig()`, che legge il file JSON di configurazione, ne effettua il parsing e richiama la funzione di validazione.
+
+La validazione è attualmente incompleta.
+
+### 3.3 `src/functions/convertUrlToPath.ts`
+
+Contiene `convertUrlToPath()`, che converte gli URL dei file multimediali esportati da Premiere in percorsi utilizzabili dal filesystem locale.
+
+### 3.4 `src/functions/parseXml.ts`
+
+Contiene le funzioni `loadXml()` e `parseXml()`.
+
+Si occupa di leggere l'XML, convertirlo in oggetti TypeScript, raccogliere le clip dalle sequenze e costruire l'array utilizzato dal processo di estrazione.
+
+### 3.5 `src/functions/ffmpeg.ts`
+
+Contiene `_runFfmpeg()` e `runFfmpeg()`.
+
+Gestisce la costruzione degli argomenti FFmpeg, il controllo dei file di destinazione e l'esecuzione del processo esterno.
+
+### 3.6 `src/functions/utils.ts`
+
+Raccoglie le funzioni di supporto:
+
+- Conversione dei frame in secondi.
+- Calcolo della durata di una clip.
+- Generazione del percorso di output.
+- Controllo dell'esistenza di file e cartelle.
+- Creazione delle cartelle delle sequenze.
+- Salvataggio dei dati in JSON.
+- Ricerca del percorso di un media nell'XML.
+
+### 3.7 `src/types/types.ts`
+
+Contiene i tipi principali utilizzati dall'applicazione:
+
+- `Clip`
+- `FfmpegResult`
+- `AppConfig`
+
+### 3.8 `src/types/xmlPremiereFile.ts`
+
+Contiene le interfacce TypeScript che descrivono la struttura dell'XML esportato da Premiere, inclusi progetto, sequenze, tracce, clip e informazioni sui media.
+
+### 3.9 `src/appConfig.json`
+
+File di configurazione dell'applicazione.
+
+Contiene i percorsi di input e output, il percorso dell'eseguibile FFmpeg e le opzioni di elaborazione.
+
+---
+
+## 4. Architettura e flusso di esecuzione
+
+L'applicazione è organizzata in moduli funzionali, con un punto d'ingresso centrale e funzioni di supporto separate.
+
+Il flusso attuale è:
+
+```text
+Avvio dell'applicazione
+        |
+        v
+main.ts
+        |
+        v
+Caricamento configurazione
+loadConfig()
+        |
+        v
+Lettura XML Premiere
+loadXml()
+        |
+        +----------------------+
+        |                      |
+        v                      v
+Salvataggio JSON          Parsing XML
+se enableLog              parseXml()
+                               |
+                               v
+                     Array di oggetti Clip
+                               |
+                               v
+                    Elaborazione sequenziale
+                               |
+                               v
+                         runFfmpeg()
+                               |
+                               v
+                     Controllo file esistente
+                               |
+                               v
+                         spawn(FFmpeg)
+                               |
+                               v
+                     Generazione del segmento
+```
+
+### 4.1 Inizializzazione
+
+La funzione `init()` in `main.ts` carica la configurazione da:
+
+```text
+./dist/appConfig.json
+```
+
+Il percorso è relativo alla directory di lavoro del processo, non viene ricavato automaticamente dalla posizione del file JavaScript.
+
+La configurazione viene quindi passata a `main()`.
+
+### 4.2 Elaborazione principale
+
+La funzione `main()` esegue nell'ordine:
+
+1. Lettura dell'XML mediante `loadXml()`.
+2. Salvataggio dei dati analizzati, se `enableLog` è attivo.
+3. Parsing delle sequenze e delle clip mediante `parseXml()`.
+4. Elaborazione sequenziale di ogni elemento tramite `runFfmpeg()`.
+
+Il ciclo principale utilizza `for...of` con `await`, evitando di avviare tutte le estrazioni contemporaneamente.
+
+### 4.3 Gestione degli errori
+
+L'inizializzazione viene avviata con una catena di Promise:
+
+```typescript
+init()
+  .then(config => main(config))
+  .catch(err => console.warn(err));
+```
+
+Gli errori che raggiungono il livello superiore vengono stampati tramite `console.warn()`.
+
+Non è attualmente presente un sistema centralizzato di classificazione degli errori o un report finale strutturato.
+
+---
+
+## 5. Configurazione dell'applicazione
+
+La configurazione è memorizzata in `src/appConfig.json` e viene letta durante l'inizializzazione.
+
+Il contenuto attuale è:
 
 ```json
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "declaration": true,
-    "verbatimModuleSyntax": true
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "enableLog": true,
+  "premiereXmlPath": "C:\\Users\\Andrea\\Desktop\\test transcodifica original\\test transcodifica.xml",
+  "outputFolder": "C:\\Users\\Andrea\\Desktop\\tst ffmpeg",
+  "ffmpegExePath": "D:\\Programmi\\FFmpeg\\ffmpeg.exe",
+  "logFilesPath": "./log",
+  "overWriteFiles": true,
+  "separateSequences": true
 }
 ```
 
-Nel `package.json`:
+I percorsi riportati sono quelli presenti nel sorgente analizzato e devono essere adattati all'ambiente in cui viene eseguita l'applicazione.
 
-```json
-{
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js"
-  }
-}
-```
+### 5.1 Parametri
 
-Dipendenze principali:
+| Parametro | Tipo | Descrizione |
+|---|---|---|
+| `enableLog` | `boolean` | Abilita il salvataggio dei dati XML elaborati in JSON. |
+| `premiereXmlPath` | `string` | Percorso del file XML esportato da Premiere. |
+| `outputFolder` | `string` | Cartella di destinazione dei segmenti. |
+| `ffmpegExePath` | `string` | Percorso dell'eseguibile FFmpeg. |
+| `logFilesPath` | `string` | Cartella in cui salvare i dati di log JSON. |
+| `overWriteFiles` | `boolean` | Determina se sovrascrivere i file già esistenti. |
+| `separateSequences` | `boolean` | Determina se creare sottocartelle distinte per le sequenze. |
 
-```bash
-npm install fast-xml-parser
-npm install --save-dev typescript @types/node
-```
+### 5.2 Caricamento e validazione
 
-Con `NodeNext`, gli import locali nel codice TypeScript utilizzano l'estensione `.js`, anche se i sorgenti sono file `.ts`.
+La funzione `loadConfig()`:
 
-Esempio:
+1. Legge il file tramite `readFile()`.
+2. Converte il contenuto JSON in un oggetto.
+3. Richiama `isValid()`.
+4. Restituisce l'oggetto come `AppConfig`.
+
+La funzione `isValid()` restituisce attualmente sempre `true`.
+
+Di conseguenza, il programma non verifica realmente:
+
+- La presenza dei campi obbligatori.
+- Il tipo dei valori.
+- La correttezza dei percorsi.
+- L'esistenza dell'XML.
+- La disponibilità dell'eseguibile FFmpeg.
+- La validità delle opzioni booleane.
+
+Questa funzione è un punto prioritario da completare.
+
+### 5.3 Percorso di caricamento
+
+Il percorso `./dist/appConfig.json` presuppone che il file si trovi nella cartella attesa rispetto alla directory di lavoro.
+
+Il file sorgente `src/appConfig.json` e quello atteso in `dist/appConfig.json` devono essere mantenuti sincronizzati.
+
+La procedura con cui il file JSON viene copiato nella directory di distribuzione deve essere verificata nella configurazione di build, non inclusa nello ZIP.
+
+---
+
+## 6. Lettura e parsing dell'XML di Premiere
+
+Il modulo `parseXml.ts` implementa due funzioni distinte:
+
+- `loadXml(path)`
+- `parseXml(xmlData)`
+
+### 6.1 Caricamento dell'XML
+
+La funzione `loadXml()` legge il file in UTF-8 e utilizza `fast-xml-parser`.
+
+La configurazione del parser è:
 
 ```typescript
-import { readXml } from "./core/readXml.js";
-import type { Segment } from "./types/segment.js";
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  parseAttributeValue: false,
+  trimValues: true,
+  isArray: (tagName, jPath, isLeafNode, isAttribute) =>
+    xmlPathForceArray.includes(jPath.toString())
+});
 ```
 
-Per i moduli Node nativi, utilizzare import espliciti come:
+Gli attributi XML vengono conservati con il prefisso `@_`.
 
-```typescript
-import { readFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
+I valori degli attributi non vengono convertiti automaticamente in numeri o booleani.
+
+### 6.2 Elementi forzati ad array
+
+La funzione imposta esplicitamente come array i seguenti percorsi:
+
+```text
+xmeml.project.children.sequence
+xmeml.project.children.sequence.media.video.track
+xmeml.project.children.sequence.media.video.track.clipitem
 ```
 
-## 5. Parsing dell'XML
+Questo permette di gestire in modo uniforme le sequenze, le tracce video e gli elementi `clipitem`, anche quando nell'XML è presente un solo elemento.
 
-L'XML viene letto tramite `node:fs/promises` e convertito in un oggetto JavaScript con `fast-xml-parser`.
+Gli altri elementi ripetuti non inclusi in questa lista dipendono dal comportamento predefinito del parser.
 
-Esempio di configurazione:
+### 6.3 Gestione degli errori di lettura
 
-```typescript
-import { readFile } from "node:fs/promises";
-import { XMLParser } from "fast-xml-parser";
+La funzione intercetta gli errori e genera un nuovo errore con il messaggio:
 
-export async function readXml(
-  filePath: string
-): Promise<unknown> {
-  const xmlContent = await readFile(filePath, "utf8");
-
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    attributeNamePrefix: "@_",
-    parseAttributeValue: false,
-    trimValues: true,
-  });
-
-  return parser.parse(xmlContent);
-}
+```text
+ERRORE - FILE XML NON TROVATO
 ```
 
-Il parsing è già stato implementato nel progetto. È stato inoltre creato un array di oggetti che contiene i dati necessari per ogni taglio.
+Il messaggio viene utilizzato anche per altri eventuali errori verificatisi durante la lettura o il parsing.
 
-**Attenzione:** gli elementi XML ripetuti possono essere rappresentati come array, mentre quelli presenti una sola volta possono essere rappresentati come oggetti singoli. Il parser dei segmenti deve gestire entrambe le situazioni.
+Sarebbe opportuno distinguere tra file inesistente, problemi di accesso e XML non valido.
 
-È inoltre fondamentale distinguere:
+### 6.4 Verifica della struttura
 
-- Posizione del clip nella timeline.
-- Punto IN nella sorgente.
-- Punto OUT nella sorgente.
-- Durata del segmento.
+`parseXml()` verifica la presenza della struttura principale:
 
-Non bisogna presumere che i valori `start` ed `end` rappresentino sempre i punti di taglio nella sorgente. Il significato esatto dipende dal formato XML e dalla struttura del progetto Premiere.
+```text
+xmeml
+└── project
+    └── children
+        ├── sequence
+        └── clip
+```
 
-## 6. Percorsi URI dell'XML
+Se la struttura è incompleta, genera un errore che invita a verificare l'esportazione dell'XML completo del progetto.
 
-Premiere può esportare i percorsi dei file nel formato URI.
+Se non sono presenti sequenze, genera un errore specifico.
+
+### 6.5 Raccolta delle clip
+
+Per ogni sequenza, il parser:
+
+1. Legge le tracce video.
+2. Raccoglie gli elementi `clipitem` presenti in ciascuna traccia.
+3. Mantiene il nome della sequenza associato alle clip.
+4. Conta le sequenze, le tracce video e le clip raccolte.
+5. Trasforma ogni elemento in un oggetto `Clip`.
+
+Viene stampato un riepilogo simile al seguente:
+
+```text
+Analisi progetto completata. Rilevate N sequenze, N tracce, N clip
+```
+
+**Limitazione importante:** il codice raccoglie le clip dalle tracce video. Non esegue una raccolta indipendente delle tracce audio né una ricostruzione completa della timeline audiovisiva.
+
+La selezione delle clip da estrarre si basa quindi sugli elementi `clipitem` presenti nelle tracce video dell'XML.
+
+### 6.6 Recupero dei percorsi dei media
+
+Il percorso del file sorgente viene cercato in due modi.
+
+**Primo tentativo:** viene letto da:
+
+```text
+sequence.media.video.track.clipitem.file.pathurl
+```
+
+**Secondo tentativo:** se il percorso non è presente e non è già stato registrato, viene invocata `findFilePath()` per cercarlo nell'elenco dei clip del progetto.
+
+Il risultato viene memorizzato in `clipFilePath`, un registro indicizzato tramite nome del file.
+
+Questo consente di riutilizzare il percorso quando lo stesso nome ricompare in altri elementi XML.
+
+Il codice usa il nome del file come chiave del registro. Se progetti diversi contengono media distinti con lo stesso nome, questa strategia può associare un percorso non corretto. È opportuno valutare l'utilizzo degli identificativi dei media definiti nell'XML.
+
+### 6.7 Dati obbligatori della clip
+
+Prima di costruire l'oggetto `Clip`, il codice verifica la presenza di:
+
+- `in`
+- `out`
+- `rate.timebase`
+- `name`
+- Percorso del file sorgente
+
+Se uno di questi dati manca, viene generato un errore.
+
+La verifica è limitata alla presenza dei valori: non controlla ancora che siano numerici, finiti o coerenti tra loro.
+
+---
+
+## 7. Conversione degli URL in percorsi Windows
+
+Premiere può esportare i percorsi dei file multimediali nel formato URI.
 
 Esempio:
 
@@ -182,34 +481,218 @@ Percorso Windows corrispondente:
 Z:\FIGHTTANK\VIDEO\20261024 - Val Cavanata\SONY CUPPI\20261025_VID1929.MP4
 ```
 
-Una possibile funzione di conversione:
+### 7.1 Implementazione
+
+La funzione `convertUrlToPath()` utilizza la funzione nativa `fileURLToPath()` di Node.js.
 
 ```typescript
-export function fileUriToWindowsPath(uri: string): string {
-  const parsedUri = new URL(uri);
+import { fileURLToPath } from "url";
 
-  if (parsedUri.protocol !== "file:") {
-    throw new Error(`Protocollo non supportato: ${uri}`);
-  }
+export function convertUrlToPath(fileUrl: string): string {
+  let cleanUrl = fileUrl.replace(
+    /^file:\/\/localhost\//i,
+    "file:///"
+  );
 
-  let path = decodeURIComponent(parsedUri.pathname);
-  path = path.replace(/^\/([A-Za-z]):/, "$1:");
-  path = path.replaceAll("/", "\\");
+  const windowsPath = fileURLToPath(cleanUrl);
 
-  return path;
+  return windowsPath;
 }
 ```
 
-Questa implementazione è adatta ai percorsi locali con lettera di unità, come quelli dell'esempio. Per supportare anche URI UNC, server di rete o altre varianti, sarà necessario estenderla e testarla.
+Prima della conversione, la funzione normalizza il prefisso `file://localhost/`, evitando che venga interpretato come un percorso di rete UNC.
 
-## 7. Invocazione di FFmpeg
+La decodifica delle sequenze percent-encoded, come `%20`, viene gestita dalla funzione nativa.
 
-L'approccio scelto è `spawn()` da `node:child_process`, con un array di argomenti separati.
+### 7.2 Limiti da verificare
 
-Esempio concettuale del comando di estrazione:
+L'implementazione è destinata ai percorsi locali Windows utilizzati dal progetto.
+
+Devono essere verificati separatamente:
+
+- Percorsi UNC.
+- URI con autorità diverse da `localhost`.
+- URI malformati.
+- Percorsi contenenti caratteri particolari.
+- Comportamento su sistemi operativi diversi da Windows.
+
+La funzione non verifica che il file convertito esista effettivamente sul disco.
+
+---
+
+## 8. Modello dati delle clip
+
+Il tipo `Clip`, definito in `src/types/types.ts`, rappresenta il singolo segmento da elaborare.
+
+```typescript
+export type Clip = {
+  startFrame: number;
+  endframe: number;
+  fpsTimeBase: number;
+  fileName: string;
+  filePath: string;
+  startSeconds: number;
+  durationSeconds: number;
+  clipCountForFile: number;
+  sequenceName: string;
+};
+```
+
+### 8.1 Significato dei campi
+
+| Campo | Descrizione |
+|---|---|
+| `startFrame` | Valore del punto `in` letto dall'elemento XML. |
+| `endframe` | Valore del punto `out` letto dall'elemento XML. |
+| `fpsTimeBase` | Base temporale `rate.timebase` della clip. |
+| `fileName` | Nome del file sorgente. |
+| `filePath` | Percorso locale del file sorgente. |
+| `startSeconds` | Tempo iniziale calcolato in secondi. |
+| `durationSeconds` | Durata calcolata in secondi. |
+| `clipCountForFile` | Contatore progressivo associato al nome del file. |
+| `sequenceName` | Nome della sequenza di Premiere da cui proviene la clip. |
+
+### 8.2 Calcolo del tempo iniziale
+
+Il tempo iniziale viene calcolato da `calcStartSeconds()`:
+
+```typescript
+export function calcStartSeconds(
+  frameIn: number,
+  timeBase: number
+): number {
+  return frameIn / timeBase;
+}
+```
+
+La formula implementata è:
+
+\[
+t_{\text{start}} = \frac{F_{\text{in}}}{T}
+\]
+
+dove:
+
+- \(F_{\text{in}}\) è il valore del campo `in`.
+- \(T\) è `rate.timebase`.
+
+### 8.3 Calcolo della durata
+
+La durata viene calcolata da `calcDurationSeconds()`:
+
+```typescript
+export function calcDurationSeconds(
+  frameIn: number,
+  frameOut: number,
+  timeBase: number
+): number {
+  return (frameOut - frameIn) / timeBase;
+}
+```
+
+La formula è:
+
+\[
+t_{\text{duration}} =
+\frac{F_{\text{out}} - F_{\text{in}}}{T}
+\]
+
+Questi calcoli utilizzano il valore `timebase` dell'elemento XML.
+
+**Attenzione:** il codice non utilizza il campo `ntsc` per ricostruire una base temporale razionale come \(60000/1001\). Se l'XML utilizza una base temporale nominale con indicazione NTSC, il calcolo può non rappresentare esattamente il tempo reale.
+
+La corretta interpretazione dei punti `in` e `out`, della base temporale e delle convenzioni temporali di Premiere deve essere verificata sui file reali.
+
+---
+
+## 9. Generazione dei nomi e organizzazione dell'output
+
+La funzione `calcFinalFileName()` genera il percorso finale di ciascun segmento.
+
+Il nome viene costruito usando:
+
+- Nome del file sorgente.
+- Indice progressivo della clip.
+- Estensione originale.
+- Eventuale nome della sequenza.
+
+Esempio:
+
+```text
+20261025_VID1929-1.MP4
+20261025_VID1929-2.MP4
+20261025_VID1929-3.MP4
+```
+
+Il contatore `clipCountForFile` viene incrementato quando il parser incontra un'altra clip con lo stesso nome.
+
+### 9.1 Cartella unica
+
+Se `separateSequences` è `false`, i segmenti vengono destinati direttamente alla cartella di output:
+
+```text
+outputFolder/
+├── video-1.MP4
+├── video-2.MP4
+└── video-3.MP4
+```
+
+### 9.2 Cartelle separate per sequenza
+
+Se `separateSequences` è `true`, il programma crea una sottocartella per la sequenza:
+
+```text
+outputFolder/
+├── Sequenza A/
+│   ├── video-1.MP4
+│   └── video-2.MP4
+└── Sequenza B/
+    ├── video-1.MP4
+    └── video-2.MP4
+```
+
+L'esempio illustra l'organizzazione prevista; i nomi effettivi dipendono dai dati dell'XML.
+
+La creazione della sottocartella avviene tramite `createSequenceDir()`, che utilizza `mkdir()` con l'opzione `recursive: true`.
+
+### 9.3 Limitazioni nella generazione dei nomi
+
+La funzione divide il nome sorgente usando il carattere `.` e ricompone le parti senza separatori.
+
+Per un nome come:
+
+```text
+ripresa.test.MP4
+```
+
+il risultato può perdere il punto interno al nome.
+
+È consigliabile utilizzare le funzioni del modulo `node:path`, in particolare `parse()` e `join()`, per separare correttamente nome ed estensione e costruire i percorsi.
+
+È inoltre necessario verificare la gestione di:
+
+- Nomi di sequenza non validi per Windows.
+- Caratteri riservati nei nomi dei file.
+- Clip con lo stesso nome presenti in sequenze differenti.
+- Possibili collisioni tra nomi di output.
+
+---
+
+## 10. Invocazione di FFmpeg
+
+Il modulo `ffmpeg.ts` contiene due funzioni:
+
+- `_runFfmpeg()`: funzione interna che avvia il processo e gestisce il risultato.
+- `runFfmpeg()`: funzione pubblica che prepara l'estrazione della clip.
+
+### 10.1 Costruzione degli argomenti
+
+Il comando generato segue questa struttura:
 
 ```text
 ffmpeg
+  -hide_banner
+  -y oppure -n
   -i INPUT.MP4
   -ss START
   -t DURATION
@@ -222,228 +705,544 @@ ffmpeg
   OUTPUT.MP4
 ```
 
-Il comando riflette il workflow già testato. L'ordine degli argomenti, il calcolo di `START` e `DURATION` e il comportamento esatto ai confini dei segmenti devono rimanere coerenti con l'implementazione funzionante del progetto.
-
-La modalità `-c copy` evita la ricodifica dei flussi audio e video, preservando la qualità dei campioni codificati.
-
-### Funzione di esecuzione
-
-La funzione `runFfmpeg()` utilizza `spawn()` e gestisce:
-
-- Avvio del processo.
-- Raccolta di `stderr`.
-- Visualizzazione dell'output nel terminale.
-- Errori di avvio.
-- Codice di uscita del processo.
-
-Per mostrare l'output senza perdere la diagnostica:
+L'array degli argomenti viene costruito nel codice:
 
 ```typescript
-const proc = spawn(ffmpegPath, args, {
+const args = [
+  "-hide_banner",
+  argOverwrite,
+  "-i", clip.filePath,
+  "-ss", String(clip.startSeconds),
+  "-t", String(clip.durationSeconds),
+  "-map", "0:v:0",
+  "-map", "0:a?",
+  "-map_metadata", "0",
+  "-c", "copy",
+  "-avoid_negative_ts", "make_zero",
+  "-movflags", "+faststart",
+  finalFileName,
+];
+```
+
+L'uso di un array di argomenti separati evita di dover costruire un'unica stringa di comando con virgolette e spazi gestiti manualmente.
+
+### 10.2 Mappatura dei flussi
+
+Gli argomenti:
+
+```text
+-map 0:v:0
+-map 0:a?
+```
+
+selezionano il primo flusso video e, se disponibile, i flussi audio.
+
+La mappatura dell'audio è opzionale: l'assenza di audio non dovrebbe impedire l'elaborazione per questo motivo.
+
+La selezione del video è invece obbligatoria. Un input privo di flusso video adatto può causare un errore di FFmpeg.
+
+### 10.3 Stream copy
+
+L'opzione:
+
+```text
+-c copy
+```
+
+copia i flussi senza ricodificarli.
+
+Questo approccio evita il costo computazionale della ricodifica e mantiene i dati dei campioni codificati originali nei pacchetti copiati.
+
+Non garantisce, però, che il taglio avvenga esattamente sul frame richiesto.
+
+La precisione dipende anche dalla struttura del flusso, dai punti di accesso, dai timestamp e dal comportamento di FFmpeg.
+
+### 10.4 Altre opzioni
+
+| Opzione | Funzione |
+|---|---|
+| `-hide_banner` | Nasconde il banner iniziale di FFmpeg. |
+| `-y` | Consente la sovrascrittura degli output. |
+| `-n` | Impedisce la sovrascrittura degli output. |
+| `-map_metadata 0` | Richiede la copia dei metadati dal primo input. |
+| `-avoid_negative_ts make_zero` | Interviene sui timestamp negativi per portarli a zero. |
+| `-movflags +faststart` | Sposta i metadati necessari all'avvio progressivo del contenitore MP4. |
+
+La copia dei metadati non equivale alla conservazione di tutte le informazioni proprietarie presenti nell'originale.
+
+### 10.5 Avvio del processo
+
+La funzione `_runFfmpeg()` usa `spawn()`:
+
+```typescript
+const process = spawn(ffmpegPath, args, {
   windowsHide: true,
   stdio: ["ignore", "ignore", "pipe"],
 });
-
-let stderr = "";
-
-proc.stderr.setEncoding("utf8");
-
-proc.stderr.on("data", (chunk: string) => {
-  process.stderr.write(chunk);
-  stderr += chunk;
-});
 ```
 
-La gestione completa deve inoltre attendere l'evento `close`, risolvere la Promise in caso di codice `0` e rifiutarla in caso di errore.
+Il processo:
 
-In seguito sarà opportuno evitare che `stderr` cresca senza limiti, salvando il log su file o conservando solo una porzione limitata della diagnostica.
+- Non apre una finestra console separata su Windows.
+- Non utilizza lo standard input.
+- Ignora lo standard output.
+- Raccoglie lo standard error.
 
-## 8. Elaborazione sequenziale
+L'evento `error` provoca il rifiuto della Promise.
 
-L'array dei segmenti viene elaborato sequenzialmente con `for...of`:
+L'evento `close` determina il risultato:
+
+- Codice `0`: Promise risolta con `exitCode` e `stderr`.
+- Codice diverso da `0`, oppure codice nullo: Promise rifiutata con un errore che include il codice e lo standard error raccolto.
+
+### 10.6 Risultato dell'esecuzione
+
+Il tipo `FfmpegResult` è definito come:
 
 ```typescript
-for (const segment of segments) {
-  await cutSegment(segment);
+export type FfmpegResult = {
+  exitCode: number;
+  stderr: string;
+};
+```
+
+La funzione restituisce questo oggetto quando l'operazione termina con successo o quando un file esistente viene saltato.
+
+**Limitazione:** nel codice attuale, `stderr` viene accumulato in memoria e non viene stampato progressivamente nel terminale. Non è implementato un sistema di log persistente specifico per ogni processo FFmpeg.
+
+---
+
+## 11. Gestione dei file esistenti
+
+La funzione `runFfmpeg()` controlla se il percorso di output esiste tramite `existOnFileSystem()`.
+
+Il comportamento dipende dal parametro `overWriteFiles`.
+
+### 11.1 Sovrascrittura abilitata
+
+Se `overWriteFiles` è `true`:
+
+- Se il file non esiste, viene avviato FFmpeg con `-y`.
+- Se il file esiste, viene stampato un warning e FFmpeg viene comunque avviato con `-y`.
+
+### 11.2 Sovrascrittura disabilitata
+
+Se `overWriteFiles` è `false`:
+
+- Se il file non esiste, viene avviato FFmpeg con `-n`.
+- Se il file esiste, viene stampato un warning e l'estrazione viene saltata.
+
+Nel caso di skip, la funzione restituisce:
+
+```typescript
+{
+  exitCode: 0,
+  stderr: ""
 }
 ```
 
-Non utilizzare:
+Questo risultato non distingue uno skip da una vera estrazione completata.
 
-```typescript
-segments.forEach(async (segment) => {
-  await cutSegment(segment);
-});
-```
+### 11.3 Limiti attuali
 
-`forEach()` non attende le Promise delle callback. Nel secondo esempio, i processi FFmpeg possono partire contemporaneamente.
+La funzione `existOnFileSystem()` utilizza `access()` e restituisce `false` per qualsiasi errore intercettato.
 
-Per il primo prototipo, l'elaborazione sequenziale è preferibile perché i file sorgente sono molto grandi e si vuole controllare il carico sul disco.
+Questo significa che un errore di accesso o un altro problema del filesystem può essere interpretato come assenza del file.
 
-## 9. Gestione dei file esistenti
+La gestione dovrebbe distinguere almeno:
 
-La soluzione prevista è:
+- File inesistente.
+- File esistente.
+- Permessi insufficienti.
+- Directory non disponibile.
+- Errore di accesso al filesystem.
 
-1. Controllare se il file di destinazione esiste.
-2. Se esiste, stampare un warning e saltare il taglio.
-3. Passare comunque `-n` a FFmpeg, così il processo non sovrascrive un file eventualmente creato nel frattempo.
+La verifica dell'esistenza e il successivo avvio di FFmpeg non costituiscono un'operazione atomica. L'opzione `-n` offre una protezione aggiuntiva contro la sovrascrittura accidentale quando la sovrascrittura è disabilitata.
 
-Esempio:
+### 11.4 Creazione delle cartelle
 
-```typescript
-import { access } from "node:fs/promises";
-import { constants } from "node:fs";
+`createSequenceDir()` crea la cartella della sequenza soltanto quando `separateSequences` è attivo.
 
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path, constants.F_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-```
+La cartella base `outputFolder` non viene creata esplicitamente quando `separateSequences` è disattivato.
 
-Prima di lanciare FFmpeg:
+È quindi necessario assicurarsi che la cartella di output esista oppure implementare la creazione automatica della directory base.
 
-```typescript
-if (await fileExists(outputPath)) {
-  console.warn(`File già esistente, salto: ${outputPath}`);
-  return;
-}
-```
+---
 
-La gestione definitiva dovrà distinguere file esistenti, errori di permessi, cartelle mancanti e altri errori del filesystem. Non tutti gli errori restituiti dal controllo di esistenza significano necessariamente che il file non esista.
+## 12. Log e salvataggio dei dati
 
-## 10. Metadati Sony e spazio colore
+La funzione `saveJson()` permette di salvare i dati in formato JSON.
 
-Durante i test sono emerse differenze tra un originale Sony e un segmento generato da FFmpeg.
+La funzione:
 
-L'originale presenta:
+1. Crea la directory di log con `mkdir(..., { recursive: true })`.
+2. Costruisce il percorso del file.
+3. Serializza gli oggetti tramite `JSON.stringify()`.
+4. Scrive il contenuto sul disco.
 
-- Brand contenitore `XAVC`.
-- Traccia dati Sony `rtmd`.
-- Tag timecode sulla traccia dati.
-- Video H.264 4:2:2 Intra a 10 bit.
-
-Il file generato da FFmpeg presenta:
-
-- Brand contenitore `isom`.
-- Solo flussi video e audio.
-- Assenza della traccia dati `rtmd`.
-
-Premiere Pro riconosce automaticamente S-Log3/S-Gamut3.Cine negli originali, ma non nei segmenti generati.
-
-Il brand `isom` non implica una perdita di qualità video. Tuttavia, il contenitore risultante non è equivalente all'originale Sony per quanto riguarda i metadati e le tracce proprietarie.
-
-La traccia `rtmd` non è stata ripristinata. L'approccio di copiarla con MP4Box è stato abbandonato.
-
-Per il workflow attuale:
-
-- Conservare sempre gli originali Sony.
-- Considerare i segmenti FFmpeg come derivati di lavoro.
-- Prevedere eventualmente l'assegnazione manuale o automatizzata dello spazio colore in Premiere.
-- Verificare separatamente il timecode, i metadati di ripresa e la sincronizzazione.
-
-Non è stato identificato un singolo campo documentato da Adobe che determini in tutti i casi il rilevamento automatico di S-Log3 nei file Sony.
-
-## 11. Frame rate e precisione dei tagli
-
-Il girato usa il frame rate:
+Il nome predefinito è:
 
 ```text
-60000/1001 fps
+data.json
 ```
 
-equivalente a circa 59,94006 fps.
+Nel file di configurazione attuale:
 
-I punti di taglio provengono dall'XML e sono espressi in frame. Il progetto deve quindi mantenere gli indici di frame come numeri interi durante parsing e calcoli, evitando conversioni premature in valori decimali.
-
-La conversione da frame a tempo può essere effettuata razionalmente:
-
-```text
-tempo = frame × 1001 / 60000
+```json
+{
+  "enableLog": true,
+  "logFilesPath": "./log"
+}
 ```
 
-Tuttavia, questa conversione non garantisce da sola che `-c copy` possa tagliare esattamente a qualsiasi frame. Il taglio senza ricodifica è vincolato alla struttura dei pacchetti e ai punti di accesso del flusso.
+Quando `enableLog` è attivo, `main()` salva il risultato restituito da `loadXml()` prima di chiamare `parseXml()`.
 
-Il workflow funzionante è stato verificato su un segmento, ma deve ancora essere validato sistematicamente su tagli con posizioni differenti.
+Il log rappresenta quindi l'oggetto ottenuto dal parsing XML, non il report finale delle estrazioni.
 
-## 12. Verifica dei risultati
+### Limitazioni
 
-Per verificare i file generati, usare FFprobe in formato JSON:
+- La serializzazione non utilizza una formattazione indentata.
+- Il file viene riscritto a ogni esecuzione.
+- Non è presente un report strutturato degli esiti FFmpeg.
+- Non vengono registrati in un report separato tutti i segmenti completati, saltati o falliti.
+- La funzione costruisce il percorso usando una barra inversa esplicita, anziché `path.join()`.
+
+Per XML molto grandi, il salvataggio dell'intero oggetto può richiedere spazio su disco e memoria aggiuntivi.
+
+---
+
+## 13. Metadati, codec e compatibilità con Premiere
+
+L'approccio attuale utilizza stream copy e richiede a FFmpeg di copiare i metadati dal flusso di input.
+
+Questo non implica che il file risultante sia equivalente all'originale sotto ogni aspetto.
+
+In particolare, la documentazione precedente riportava differenze tra gli originali Sony e i segmenti generati da FFmpeg:
+
+- Differenze nel brand del contenitore MP4.
+- Assenza della traccia dati proprietaria Sony `rtmd`.
+- Differenze nel riconoscimento automatico dello spazio colore da parte di Premiere Pro.
+
+Questi aspetti devono essere considerati come problemi noti da verificare con i file generati dalla versione attuale.
+
+La conservazione dei flussi codificati non garantisce la conservazione di tutte le tracce ausiliarie, dei metadati proprietari o delle informazioni utilizzate dal software di montaggio per identificare il materiale originale.
+
+### Raccomandazioni operative
+
+- Conservare gli originali Sony.
+- Considerare i segmenti generati come derivati di lavoro.
+- Verificare il riconoscimento di S-Log3/S-Gamut3.Cine in Premiere.
+- Controllare separatamente timecode, metadati di ripresa e sincronizzazione.
+- Confrontare codec, profondità colore, risoluzione e frame rate tra originale e segmento.
+
+Non è stata eseguita una nuova verifica sperimentale di questi aspetti sul codice e sui file multimediali attuali.
+
+---
+
+## 14. Precisione dei tagli e frame rate
+
+La precisione dei tagli dipende dalla corretta interpretazione dei punti temporali presenti nell'XML e dal comportamento di FFmpeg in modalità stream copy.
+
+Il codice attuale usa:
+
+```typescript
+startSeconds: calcStartSeconds(el.in, el.rate.timebase),
+durationSeconds: calcDurationSeconds(
+  el.in,
+  el.out,
+  el.rate.timebase
+)
+```
+
+I valori vengono quindi convertiti in secondi prima dell'invocazione di FFmpeg.
+
+### 14.1 Limiti della conversione
+
+La conversione:
+
+\[
+t = \frac{F}{T}
+\]
+
+è corretta soltanto se `F` e `T` rappresentano le grandezze temporali attese.
+
+Nei progetti Premiere possono essere presenti basi temporali con indicazione NTSC e valori di timebase nominali. Il codice attuale non utilizza il campo `ntsc` nella conversione.
+
+Per esempio, un frame rate reale di circa 59,94 fps può essere rappresentato dalla frazione:
+
+\[
+\frac{60000}{1001}
+\]
+
+anziché da 60 fps esatti.
+
+È necessario verificare se i valori `in`, `out` e `rate.timebase` utilizzati per le clip rappresentino correttamente i punti di taglio nel formato XML esportato.
+
+### 14.2 Stream copy e confini dei segmenti
+
+L'uso di `-c copy` non garantisce il taglio esatto su qualsiasi frame.
+
+I confini ottenuti possono dipendere dai pacchetti disponibili, dai punti di accesso del flusso e dai timestamp.
+
+Per validare l'implementazione è opportuno confrontare i risultati su più clip, con posizioni iniziali e durate differenti, verificando i frame e i timestamp dei file generati.
+
+---
+
+## 15. Tipi dell'XML di Premiere
+
+Il file `src/types/xmlPremiereFile.ts` contiene le interfacce utilizzate per descrivere la struttura XML.
+
+Tra i principali tipi definiti figurano:
+
+- `XmlPremiereFile`
+- `Xmeml`
+- `Project`
+- `ProjectChildren`
+- `Sequence`
+- `SequenceMedia`
+- `SequenceVideo`
+- `VideoTrack`
+- `AudioTrack`
+- `SequenceClipItem`
+- `MediaFile`
+- `FrameRate`
+- `Timecode`
+- `Sourcetrack`
+- `ClipLink`
+
+Sono inoltre presenti tipi per le informazioni relative a codec, caratteristiche video, audio, etichette e metadati.
+
+La presenza di queste interfacce permette di documentare e tipizzare molte parti della struttura XML, ma non garantisce che ogni variante di XML esportato da Premiere sia coperta.
+
+Il parser utilizza una conversione statica del risultato di `fast-xml-parser` in `XmlPremiereFile`. Questa assegnazione TypeScript non costituisce una validazione strutturale a runtime.
+
+Le interfacce e il parser devono quindi essere mantenuti coerenti con gli XML effettivamente utilizzati.
+
+---
+
+## 16. Stato attuale e limitazioni note
+
+La seguente tabella riassume lo stato ricavabile dai sorgenti analizzati.
+
+| Area | Stato |
+|---|---|
+| Lettura XML | Implementata |
+| Parsing XML | Implementato |
+| Raccolta delle clip dalle tracce video | Implementata |
+| Recupero dei percorsi media | Implementato |
+| Conversione URI in percorsi locali | Implementata |
+| Calcolo di start e durata | Implementato, da validare sui frame rate reali |
+| Generazione dei nomi di output | Implementata, con limiti nella gestione dei nomi |
+| Creazione delle sottocartelle per sequenza | Implementata |
+| Invocazione di FFmpeg | Implementata |
+| Stream copy | Implementata |
+| Sovrascrittura e skip dei file esistenti | Implementati |
+| Salvataggio JSON | Implementato |
+| Validazione della configurazione | Non implementata effettivamente |
+| Verifica automatica con FFprobe | Non presente nei sorgenti analizzati |
+| Report finale delle estrazioni | Non presente |
+| Log dettagliato e persistente di FFmpeg | Non presente |
+| Gestione robusta delle interruzioni | Non presente |
+| GUI | Non presente nei sorgenti analizzati |
+| Packaging autonomo Windows | Da verificare e sviluppare |
+
+---
+
+## 17. Problemi tecnici da affrontare
+
+### 17.1 Validazione della configurazione
+
+Completare `isValid()` affinché controlli i tipi dei campi, la loro presenza e la correttezza dei valori.
+
+Verificare i percorsi di input, output e FFmpeg prima di iniziare l'elaborazione.
+
+### 17.2 Interpretazione dei tempi
+
+Verificare la relazione tra `in`, `out`, `rate.timebase` e `rate.ntsc`.
+
+Valutare un modello temporale che eviti conversioni premature e mantenga la precisione necessaria fino alla costruzione degli argomenti FFmpeg.
+
+### 17.3 Identificazione dei media
+
+Il registro dei percorsi utilizza `fileName` come chiave.
+
+Valutare l'uso di identificativi più affidabili dell'XML, evitando che due media diversi con lo stesso nome vengano confusi.
+
+### 17.4 Gestione dei percorsi
+
+Utilizzare `node:path` per generare percorsi di output in modo robusto.
+
+Verificare il trattamento di directory mancanti, percorsi non accessibili, nomi di sequenza non validi e percorsi di rete.
+
+### 17.5 Nomi dei file
+
+Correggere la gestione delle estensioni in `calcFinalFileName()`.
+
+Definire una strategia per evitare collisioni tra clip provenienti da sequenze diverse e per gestire i caratteri non ammessi nei nomi Windows.
+
+### 17.6 Gestione degli errori
+
+Distinguere gli errori di lettura XML, parsing, filesystem, configurazione e FFmpeg.
+
+Valutare se un errore relativo a una singola clip debba interrompere l'intero lotto oppure permettere di proseguire con le successive.
+
+### 17.7 Verifica dei risultati
+
+Integrare FFprobe per controllare i file generati e confrontare i risultati con i parametri attesi.
+
+Un codice di uscita pari a zero non è sufficiente, da solo, a garantire che il taglio ottenuto sia corretto rispetto alla timeline.
+
+---
+
+## 18. Verifica dei file generati
+
+Nel codice analizzato non è presente un'integrazione con FFprobe.
+
+Per il controllo manuale dei file è possibile utilizzare:
 
 ```cmd
 ffprobe -v error -show_streams -show_format -of json "FILE.MP4"
 ```
 
-I controlli automatici da implementare sono:
+I controlli da automatizzare includono:
 
 - Esistenza del file di destinazione.
-- Codice di uscita di FFmpeg.
+- Codice di uscita del processo FFmpeg.
 - Presenza del flusso video.
-- Presenza dell'audio quando atteso.
-- Codec, risoluzione e profondità colore.
+- Presenza dell'audio quando previsto.
+- Codec audio e video.
+- Risoluzione e profondità colore.
 - Frame rate.
-- Durata e numero di frame, quando attendibili.
-- Eventuali metadati attesi.
+- Durata del contenitore.
+- Timestamp e numero di frame, quando attendibili.
+- Metadati attesi.
 - Coerenza tra durata richiesta e durata ottenuta.
 
-La durata dichiarata dal contenitore non deve essere considerata da sola una prova sufficiente della correttezza del taglio.
+Per verificare realmente la precisione dei tagli sarà necessario confrontare i segmenti con i punti di taglio originali, tenendo conto delle limitazioni dello stream copy.
 
-## 13. Interfaccia utente
+---
 
-Per il momento il programma rimane testuale.
+## 19. Interfaccia e modalità di utilizzo
 
-La CLI deve consentire di:
+L'interfaccia attuale è testuale e la configurazione viene letta da un file JSON.
 
-- Specificare o selezionare il file XML.
-- Specificare la cartella di output.
-- Mostrare il numero di segmenti rilevati.
-- Visualizzare il progresso e i log di FFmpeg.
-- Segnalare i file saltati.
-- Riassumere gli errori al termine.
-- Eventualmente produrre un report JSON.
+Non è presente, nei sorgenti analizzati, un'interfaccia grafica per selezionare i file.
 
-In una fase successiva si valuterà una GUI Windows con Electron.
+### 19.1 Procedura prevista
 
-Il core deve rimanere indipendente dall'interfaccia, così che le stesse funzioni possano essere invocate dalla CLI e dalla futura GUI.
+1. Preparare il file XML esportato da Premiere.
+2. Impostare `premiereXmlPath` nel file di configurazione.
+3. Impostare `outputFolder`.
+4. Specificare `ffmpegExePath`.
+5. Configurare `enableLog`, `overWriteFiles` e `separateSequences`.
+6. Avviare l'applicazione tramite il comando previsto dal progetto.
+7. Consultare il terminale per gli eventuali messaggi e warning.
 
-## 14. Distribuzione futura
+I comandi effettivi di build e avvio devono essere confermati consultando `package.json`, non incluso nello ZIP.
 
-L'obiettivo finale è distribuire un'applicazione Windows che non richieda l'installazione di Node.js.
+### 19.2 Miglioramenti futuri
 
-La strategia verrà valutata dopo aver stabilizzato il core:
+La CLI può essere estesa per:
 
-- Bundle del runtime Node.js e del codice TypeScript compilato.
-- Inclusione delle dipendenze JavaScript.
-- Distribuzione di FFmpeg e FFprobe.
-- Percorsi relativi all'applicazione per individuare gli eseguibili.
-- Verifica delle licenze della build FFmpeg scelta.
-- Test su un computer Windows senza ambiente di sviluppo.
+- Accettare i percorsi come argomenti.
+- Consentire la selezione interattiva dell'XML.
+- Mostrare il progresso delle estrazioni.
+- Gestire gli errori per singola clip.
+- Generare un report JSON finale.
+- Consentire di interrompere l'elaborazione in modo controllato.
 
-Una cartella portatile contenente l'applicazione e gli eseguibili necessari può essere preferibile inizialmente a un singolo `.exe` monolitico.
+Una futura GUI Windows potrà riutilizzare il core esistente, mantenendo separata la logica di elaborazione dall'interfaccia.
 
-## 15. Prossime attività
+---
 
-Ordine consigliato:
+## 20. Distribuzione futura
 
-1. Consolidare il modello TypeScript dei segmenti.
-2. Rendere robusta la conversione dei percorsi URI.
-3. Verificare la corretta interpretazione dei frame IN/OUT dell'XML.
-4. Stabilizzare la costruzione degli argomenti FFmpeg.
-5. Gestire file esistenti, errori e interruzioni.
-6. Integrare FFprobe per la verifica automatica.
-7. Creare un report finale dei segmenti elaborati, saltati e falliti.
-8. Testare un lotto di decine di segmenti.
-9. Solo successivamente progettare la GUI e il packaging.
+L'obiettivo futuro è distribuire un'applicazione Windows che possa essere eseguita senza richiedere all'utente finale di installare manualmente Node.js.
 
-## 16. Contesto per una nuova conversazione
+La strategia di distribuzione non è verificabile dai soli sorgenti ricevuti.
 
-Il progetto è scritto in TypeScript/Node.js e il parsing dell'XML e l'invocazione di FFmpeg sono già funzionanti. Esiste un array di oggetti con i dati necessari per ogni taglio. L'elaborazione è sequenziale e il processo FFmpeg viene avviato tramite `spawn()`.
+Le attività previste comprendono:
 
-I segmenti vengono generati con stream copy, mantenendo il codec e senza ricodifica. È noto che i file risultanti non conservano la traccia proprietaria Sony `rtmd` e non vengono riconosciuti automaticamente da Premiere come S-Log3/S-Gamut3.Cine.
+- Compilazione dei sorgenti TypeScript.
+- Inclusione delle dipendenze JavaScript necessarie.
+- Copia del file di configurazione nella posizione attesa.
+- Distribuzione di FFmpeg e, quando integrato, FFprobe.
+- Gestione dei percorsi degli eseguibili.
+- Verifica delle licenze della build FFmpeg utilizzata.
+- Test su un computer privo dell'ambiente di sviluppo.
 
-**Quando si riprende il lavoro, partire dal codice effettivamente presente nel progetto**, non ricostruire da zero le funzioni già implementate. Chiedere all'utente di condividere i file o gli estratti pertinenti prima di modificarli.
+Una distribuzione portatile contenente il runtime, il codice compilato e gli eseguibili necessari può essere valutata prima di realizzare un installer completo.
 
-Priorità immediata: consolidare il core CLI e verificare in modo affidabile i tagli, la gestione degli errori e i metadati dei segmenti risultanti.
+---
+
+## 21. Roadmap consigliata
+
+Le seguenti attività sono proposte di sviluppo, non funzionalità già implementate.
+
+1. **Validazione della configurazione**
+   - Implementare `isValid()`.
+   - Controllare i percorsi e i tipi dei parametri.
+
+2. **Consolidamento del parsing XML**
+   - Verificare gli XML con una o più sequenze.
+   - Verificare tracce vuote e clip prive di alcuni campi.
+   - Rendere più robusto il recupero dei percorsi.
+
+3. **Precisione dei tempi**
+   - Validare `in`, `out`, `timebase` e `ntsc`.
+   - Testare tagli in posizioni differenti.
+   - Confrontare i frame attesi e quelli ottenuti.
+
+4. **Gestione dei percorsi e dei nomi**
+   - Utilizzare `node:path`.
+   - Gestire estensioni, caratteri non validi e collisioni.
+   - Verificare la creazione delle cartelle di output.
+
+5. **Robustezza di FFmpeg**
+   - Distinguere gli errori di avvio dagli errori di elaborazione.
+   - Definire il comportamento in caso di errore di una clip.
+   - Valutare la gestione dell'interruzione del processo.
+
+6. **Verifica automatica**
+   - Integrare FFprobe.
+   - Controllare i flussi e i metadati dei segmenti.
+   - Validare la durata dei risultati.
+
+7. **Report finale**
+   - Registrare clip completate, saltate e fallite.
+   - Produrre un riepilogo leggibile e un eventuale JSON.
+
+8. **Test su un lotto reale**
+   - Elaborare decine di clip.
+   - Verificare la correttezza dei nomi e dei percorsi.
+   - Controllare i risultati in Premiere Pro.
+
+9. **Packaging Windows**
+   - Stabilizzare la CLI.
+   - Definire la distribuzione del runtime e di FFmpeg.
+   - Testare su un computer senza Node.js installato.
+
+10. **Eventuale interfaccia grafica**
+    - Progettare la GUI solo dopo aver stabilizzato il core.
+
+---
+
+## 22. Contesto per riprendere lo sviluppo
+
+Premiere Smart Rendering è un progetto TypeScript/Node.js che estrae segmenti da un progetto Adobe Premiere Pro attraverso il parsing dell'XML e l'invocazione di FFmpeg.
+
+Il codice è organizzato in `src/functions/` e `src/types/`, con `src/main.ts` come punto d'ingresso.
+
+Il flusso attuale legge la configurazione da JSON, carica l'XML, raccoglie le clip dalle tracce video, converte i percorsi dei media e costruisce un array di oggetti `Clip`.
+
+Per ogni clip viene calcolato il tempo iniziale e la durata a partire dai valori `in`, `out` e `rate.timebase` dell'XML.
+
+Le clip vengono elaborate sequenzialmente. FFmpeg viene avviato tramite `spawn()` e utilizza stream copy per evitare la ricodifica dei flussi audio e video.
+
+La configurazione permette di scegliere la cartella di output, l'eseguibile FFmpeg, il salvataggio dei dati JSON, la sovrascrittura dei file e la creazione di sottocartelle per sequenza.
+
+Le principali aree da consolidare sono la validazione della configurazione, l'interpretazione precisa dei frame, la robustezza della gestione dei percorsi e degli errori, la verifica dei file generati e la produzione di un report finale.
+
+**Quando si riprende il lavoro, partire sempre dal codice effettivamente presente nel progetto**, evitando di riscrivere funzioni già implementate senza averne prima verificato il comportamento.
+
+La priorità è consolidare il core CLI e rendere verificabili la correttezza dei tagli, la gestione dei file e la compatibilità dei segmenti generati con il flusso di lavoro di Premiere Pro.
