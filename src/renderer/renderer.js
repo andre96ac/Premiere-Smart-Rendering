@@ -1,3 +1,4 @@
+
 const version = document.getElementById("version");
 
 const xmlPath = document.getElementById("xmlPath");
@@ -16,14 +17,36 @@ function updateStartButton() {
 
 document
     .getElementById("selectXml")
-    .addEventListener("click", () => {
-        status.textContent = "Selezione XML non ancora collegata";
+    .addEventListener("click", async () => {
+        try {
+            const selectedPath = await window.electronAPI.selectXml();
+
+            if (selectedPath) {
+                xmlPath.value = selectedPath;
+                status.textContent = "File XML selezionato";
+            }
+
+            updateStartButton();
+        } catch (error) {
+            status.textContent = `Errore: ${error.message}`;
+        }
     });
 
 document
     .getElementById("selectOutput")
-    .addEventListener("click", () => {
-        status.textContent = "Selezione cartella non ancora collegata";
+    .addEventListener("click", async () => {
+        try {
+            const selectedPath = await window.electronAPI.selectOutput();
+
+            if (selectedPath) {
+                outputPath.value = selectedPath;
+                status.textContent = "Cartella di destinazione selezionata";
+            }
+
+            updateStartButton();
+        } catch (error) {
+            status.textContent = `Errore: ${error.message}`;
+        }
     });
 
 startButton.addEventListener("click", () => {

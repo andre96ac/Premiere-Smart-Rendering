@@ -1,4 +1,11 @@
-import { app, BrowserWindow } from "electron";
+
+import {
+    app,
+    BrowserWindow,
+    ipcMain,
+    dialog
+} from "electron";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -25,6 +32,27 @@ function createWindow() {
         path.join(__dirname, "../renderer/index.html")
     );
 }
+
+ipcMain.handle("select-xml", async () => {
+    const result = await dialog.showOpenDialog({
+        title: "Seleziona XML di Premiere",
+        filters: [
+            { name: "XML", extensions: ["xml"] }
+        ],
+        properties: ["openFile"]
+    });
+
+    return result.canceled ? null : result.filePaths[0];
+});
+
+ipcMain.handle("select-output", async () => {
+    const result = await dialog.showOpenDialog({
+        title: "Seleziona cartella di destinazione",
+        properties: ["openDirectory", "createDirectory"]
+    });
+
+    return result.canceled ? null : result.filePaths[0];
+});
 
 app.whenReady().then(() => {
     createWindow();
