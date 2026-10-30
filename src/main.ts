@@ -5,33 +5,17 @@ import type { AppConfig } from "./types/types.js";
 
 import _appConfig from "./appConfig.json" with {type: "json"};
 import { loadConfig } from "./functions/appConfig.js";
+import { runProject } from "./runProject.js";
 
 
 
-async function init(): Promise<AppConfig>{
+async function init(): Promise<void>{
     const configUrl = "./dist/appConfig.json";
-    const config: AppConfig = await loadConfig(configUrl)
-    return config
+    const config = await loadConfig(configUrl);
+    await runProject(config);
 }
 
-async function main(appConfig: AppConfig){
-    const data = await loadXml(appConfig.premiereXmlPath);
-
-     if(appConfig.enableLog){
-        saveJson(data, appConfig.logFilesPath);
-    }
-
-    const finalData = parseXml(data);
-
-    for (const clip of finalData) {
-        await runFfmpeg(appConfig.ffmpegExePath, appConfig.outputFolder, clip, appConfig.overWriteFiles, appConfig.separateSequences);
-    }
-
-  
-
-}
-
-init()
-.then(config => main(config))
-.catch(err => console.warn(err))
-
+init().catch((error: unknown) => {
+    console.error("Application error:", error);
+    process.exitCode = 1;
+});
