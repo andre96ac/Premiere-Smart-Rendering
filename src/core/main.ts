@@ -5,7 +5,7 @@ import type { AppConfig } from "./types/types.js";
 
 import _appConfig from "./appConfig.json" with {type: "json"};
 import { loadConfig } from "./functions/appConfig.js";
-import { runProject } from "./runProject.js";
+import { runCore } from "./runCore.js";
 import { AppLog } from "./functions/AppLog.js";
 
 
@@ -13,7 +13,7 @@ import { AppLog } from "./functions/AppLog.js";
 async function init(): Promise<void>{
     const configUrl = "./dist/core/appConfig.json";
     const config = await loadConfig(configUrl);
-    await runProject(config);
+    await runCore(config);
 }
 
 init().catch((error: Error) => {

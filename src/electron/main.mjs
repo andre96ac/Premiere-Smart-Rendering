@@ -9,7 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { access } from "node:fs/promises";
 
-import { runProject } from "../../dist/core/runProject.js";
+import { runCore } from "../../dist/core/runCore.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,7 +93,7 @@ ipcMain.handle("start-rendering", async (_event, options) => {
         )
     };
 
-    await runProject(config);
+    await runCore(config);
 
     return { success: true };
 });

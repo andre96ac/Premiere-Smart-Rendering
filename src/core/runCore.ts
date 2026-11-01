@@ -4,7 +4,7 @@ import { loadXml, parseXml } from "./functions/parseXml.js";
 import { saveJson } from "./functions/utils.js";
 import type { AppConfig } from "./types/types.js";
 
-export async function runProject(config: AppConfig) {
+export async function runCore(config: AppConfig) {
 
 
 
