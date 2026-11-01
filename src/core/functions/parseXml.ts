@@ -141,7 +141,7 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
     })
 
 
-    AppLog.instance.log(result);
+    AppLog.instance.log("Creazione dataset completata, vedi converted-data.json per i dettagli");
 
 
     return result;

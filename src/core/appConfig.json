@@ -1,6 +1,6 @@
 {
   "enableLog": true,
-  "premiereXmlPath": "C:\\Users\\Andrea\\Desktop\\test transcodifica original\\test transcodifica.xml",
+  "premiereXmlPath": "C:\\Users\\Andrea\\Desktop\\progetto per test transcodifica\\test transcodifica.xml",
   "outputFolder": "C:\\Users\\Andrea\\Desktop\\tst ffmpeg",
   "ffmpegExePath": "D:\\Programmi\\FFmpeg\\ffmpeg.exe",
   "logFilesPath": "./log",

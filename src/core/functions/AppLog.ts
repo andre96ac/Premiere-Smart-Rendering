@@ -25,7 +25,7 @@ export class AppLog{
         return !!this._baseLogFileStream;
     }
 
-    private _baseLogFileName: string = 'log.txt'
+    private _baseLogFileName: string = 'premiere-smart-rendering.log'
 
     private _baseLogFileStream: WriteStream | undefined;
 
@@ -43,11 +43,15 @@ export class AppLog{
              switch(type){
                 case 'err':
                     this._baseLogFileStream?.write(`ERROR - ${finalMsg}`);
+                    break;
                 case 'log':
                     this._baseLogFileStream?.write(`LOG - ${finalMsg}`);
+                    break;
                 case 'warn':
                     this._baseLogFileStream?.write(`WARNING - ${finalMsg}`);
+                    break;
             }
+            this._baseLogFileStream?.write('\n')
         }
 
     }
@@ -56,14 +60,17 @@ export class AppLog{
         if(this._enableLogging){
             switch(type){
                 case 'err':
-                    console.error(`ERROR - ${msg}`);
+                    console.error(`ERROR - `, msg);
                     if(!!e){
                         console.error(e);
                     }
+                    break;
                 case 'log':
-                    console.log(`LOG - ${msg}`);
+                    console.log(`LOG - `, msg);
+                    break;
                 case 'warn':
-                    console.warn(`WARNING - ${msg}`);
+                    console.warn(`WARNING - `, msg);
+                    break;
             }
         }
     }
@@ -77,7 +84,7 @@ export class AppLog{
 
     public async init(logFolder: string, enableLog: boolean){
 
-        
+        this._logFolder = logFolder;
         if(!!this._logFolder && this._logFolder.length > 0){
             await mkdir(logFolder, {recursive: true})
             this._baseLogFileStream = createWriteStream(path.join(
@@ -128,7 +135,7 @@ export class AppLog{
         
         const logPath = path.join(
                         this._logFolder?? '',
-                        this._baseLogFileName
+                        fileName
                     )
     
         let finalJson: string = typeof(myData) == 'object'? JSON.stringify(myData) : myData;
