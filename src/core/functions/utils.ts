@@ -2,6 +2,7 @@ import { access, constants, mkdir, writeFile } from "fs/promises";
 import type { Clip } from "../types/types.js";
 import path from "path";
 import type { XmlPremiereFile } from "../types/xmlPremiereFile.js";
+import { AppLog } from "./AppLog.js";
 
 
 /**
@@ -43,8 +44,7 @@ export function calcFinalFileName(outputFolder: string, clip: Clip, includeSeque
     const finalFileName = `${splitFileName.flat()}-${clip.clipCountForFile}.${extension}`;
     const finalPath = includeSequenceFolder? `${outputFolder}\\${clip.sequenceName}\\${finalFileName}` : `${outputFolder}\\${finalFileName}`
 
-    //TODO implementare classe log con scrittura file + terminale
-    console.log("NOME DI OUTPUT CALCOLATO: "+ finalPath)
+    AppLog.instance.log("NOME DI OUTPUT CALCOLATO: "+ finalPath)
     return finalPath;
 }
 

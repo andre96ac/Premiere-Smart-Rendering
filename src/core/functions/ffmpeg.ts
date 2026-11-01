@@ -2,6 +2,7 @@
 import { spawn } from "node:child_process";
 import type { Clip, FfmpegResult } from "../types/types.js";
 import { calcFinalFileName, createSequenceDir, existOnFileSystem } from "./utils.js";
+import { AppLog } from "./AppLog.js";
 
 
 function _runFfmpeg(
@@ -85,15 +86,13 @@ export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, cl
         }
         else{
             if(overwrite){
-                //TODO implementare classe log con scrittura file + terminale
 
-                console.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
+                AppLog.instance.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
                 return _runFfmpeg(args, ffmpegPath)
             }
             else{
-                //TODO implementare classe log con scrittura file + terminale
 
-                console.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SKIPPATO`);
+                AppLog.instance.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SKIPPATO`);
                 return {
                         exitCode: 0,
                         stderr: '',

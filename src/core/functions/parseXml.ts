@@ -4,6 +4,7 @@ import { XMLParser } from "fast-xml-parser";
 import type { Sequence, SequenceClipItem, VideoTrack, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { convertUrlToPath } from "./convertUrlToPath.js";
 import { calcDurationSeconds, calcStartSeconds, findFilePath, saveJson } from "./utils.js";
+import { AppLog } from "./AppLog.js";
 
 
 export async function loadXml(path: string): Promise<XmlPremiereFile>{
@@ -77,9 +78,8 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
 
 
 
-    //TODO implementare classe log con scrittura file + terminale
 
-    console.log(`Analisi progetto completata. Rilevate ${clipItemsSequence.length} sequenze, ${trackCount} tracce, ${clipCount} clip`)
+    AppLog.instance.log(`Analisi progetto completata. Rilevate ${clipItemsSequence.length} sequenze, ${trackCount} tracce, ${clipCount} clip`)
 
 
     
@@ -140,9 +140,8 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
         result.push(...partialResult);
     })
 
-    //TODO implementare classe log con scrittura file + terminale
 
-    console.log(result);
+    AppLog.instance.log(result);
 
 
     return result;
