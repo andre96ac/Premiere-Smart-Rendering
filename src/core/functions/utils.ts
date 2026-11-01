@@ -48,7 +48,7 @@ export function calcFinalFilePathName(outputFolder: string, clip: Clip, includeS
 
     //togliamo estensione e teniamola a parte
     const finalFileName = calcFinalFileName(clip);
-    return includeSequenceFolder? `${outputFolder}\\${clip.sequenceName}\\${finalFileName}` : `${outputFolder}\\${finalFileName}`;
+    return includeSequenceFolder? path.join(outputFolder,clip.sequenceName,finalFileName) : path.join(outputFolder,finalFileName);
 }
 
 /**
@@ -71,7 +71,7 @@ export async function existOnFileSystem(path: string): Promise<boolean> {
  * @param baseOutputFolder 
  */
 export async function createSequenceDir(clip: Clip, baseOutputFolder: string): Promise<void>{
-  const pathToCreate = `${baseOutputFolder}\\${clip.sequenceName}`;
+  const pathToCreate = path.join(baseOutputFolder,clip.sequenceName);
   const pathAlreadyExistOnFs = await existOnFileSystem(pathToCreate)
   if(!pathAlreadyExistOnFs){
     await mkdir(pathToCreate, { recursive: true });
@@ -91,7 +91,7 @@ export async function saveJson (myJson: object | string, logFolder: string, file
 
   await mkdir(logFolder, {recursive: true})
 
-  const logPath = `${logFolder}\\${fileName}`
+  const logPath = path.join(logFolder,fileName);
   let finalJson: string = typeof(myJson) == 'object'? JSON.stringify(myJson) : myJson;
   await writeFile(logPath, finalJson);
  
