@@ -3,7 +3,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 
-type LogType = 'err' | 'log' | 'warn';
+// type LogType = 'err' | 'log' | 'warn';
+
+enum LogType{
+    err = 'ERROR',
+    log = 'DEBUG',
+    warn = "WARNING"
+}
 
 
 export class AppLog{
@@ -36,42 +42,35 @@ export class AppLog{
 
     //#region PRIVATES
 
+    private _getMsgPrefix(type: LogType){
+        return `${new Date().toLocaleString()} - ${type} - `
+    }
+
 
     private _logOnFile(msg: string | Object, type: LogType){
         const finalMsg = typeof(msg) == 'object'? JSON.stringify(msg) : msg;
         if(this._inited){
-             switch(type){
-                case 'err':
-                    this._baseLogFileStream?.write(`ERROR - ${finalMsg}`);
-                    break;
-                case 'log':
-                    this._baseLogFileStream?.write(`LOG - ${finalMsg}`);
-                    break;
-                case 'warn':
-                    this._baseLogFileStream?.write(`WARNING - ${finalMsg}`);
-                    break;
-            }
+            this._baseLogFileStream?.write(`${this._getMsgPrefix(type)}${finalMsg}`);
             this._baseLogFileStream?.write('\n')
         }
 
     }
 
     private _logOnConsole(msg: string | Object, type: LogType, e?: Error){
-        if(this._enableLogging){
-            switch(type){
-                case 'err':
-                    console.error(`ERROR - `, msg);
-                    if(!!e){
-                        console.error(e);
-                    }
-                    break;
-                case 'log':
-                    console.log(`LOG - `, msg);
-                    break;
-                case 'warn':
-                    console.warn(`WARNING - `, msg);
-                    break;
-            }
+        const finalMsg = `${this._getMsgPrefix(type)}${msg}`
+        switch(type){
+            case LogType.err:
+                console.error(finalMsg);
+                if(!!e){
+                    console.error(e);
+                }
+                break;
+            case LogType.log:
+                console.log(finalMsg);
+                break;
+            case LogType.warn:
+                console.warn(finalMsg);
+                break;
         }
     }
 
@@ -103,18 +102,24 @@ export class AppLog{
 
 
     public log(msg:string | Object){
-        this._logOnConsole(msg, 'log')
-        this._logOnFile(msg, 'log')
+        if(this._enableLogging){
+            this._logOnConsole(msg, LogType.log)
+            this._logOnFile(msg, LogType.log)
+        }
         
     }
     public warn(msg:string | Object){
-        this._logOnConsole(msg, 'warn')
-        this._logOnFile(msg, 'warn')
+        if(this._enableLogging){
+            this._logOnConsole(msg, LogType.warn)
+            this._logOnFile(msg, LogType.warn)
+        }
         
     }
     public err(msg:string | Object, error?: Error){
-        this._logOnConsole(msg, 'err', error)
-        this._logOnFile(msg, 'err')
+        if(this._enableLogging){
+            this._logOnConsole(msg, LogType.err, error)
+            this._logOnFile(msg, LogType.err)
+        }
 
     }
 
@@ -133,6 +138,10 @@ export class AppLog{
             return;
         }
         
+        if(!this._enableLogging){
+            return;
+        }
+
         const logPath = path.join(
                         this._logFolder?? '',
                         fileName

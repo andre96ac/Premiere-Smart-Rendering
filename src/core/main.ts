@@ -6,6 +6,7 @@ import type { AppConfig } from "./types/types.js";
 import _appConfig from "./appConfig.json" with {type: "json"};
 import { loadConfig } from "./functions/appConfig.js";
 import { runProject } from "./runProject.js";
+import { AppLog } from "./functions/AppLog.js";
 
 
 
@@ -15,8 +16,7 @@ async function init(): Promise<void>{
     await runProject(config);
 }
 
-init().catch((error: unknown) => {
-    //TODO implementare classe log con scrittura file + terminale
-    console.error("Application error:", error);
+init().catch((error: Error) => {
+    AppLog.instance.err("Application error:", error);
     process.exitCode = 1;
 });

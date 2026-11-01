@@ -87,12 +87,12 @@ export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, cl
         else{
             if(overwrite){
 
-                AppLog.instance.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
+                AppLog.instance.warn(`File ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
                 return _runFfmpeg(args, ffmpegPath)
             }
             else{
 
-                AppLog.instance.warn(`ATTENZIONE: file ${finalFileName} già presente... VERRA' SKIPPATO`);
+                AppLog.instance.warn(`File ${finalFileName} già presente... VERRA' SKIPPATO`);
                 return {
                         exitCode: 0,
                         stderr: '',
