@@ -106,7 +106,7 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
  * @param config 
  */
 export async function runFfmpeg(clips: Clip[], config: AppConfig) {
-    if(!existOnFileSystem(config.outputFolder)){
+    if(! await existOnFileSystem(config.outputFolder)){
       AppLog.instance.err(`Directory di output ${config.outputFolder} Non trovata`)
       return;
     }

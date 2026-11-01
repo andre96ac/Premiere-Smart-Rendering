@@ -5,5 +5,5 @@
   "ffmpegExePath": "D:\\Programmi\\FFmpeg\\ffmpeg.exe",
   "logFilesPath": "./log",
   "overWriteFiles": true,
-  "separateSequences": false
+  "separateSequences": true
 }
