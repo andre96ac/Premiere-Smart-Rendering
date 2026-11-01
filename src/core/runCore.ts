@@ -17,11 +17,11 @@ export async function runCore(config: AppConfig) {
     const data = await loadXml(config.premiereXmlPath);
 
 
-    AppLog.instance.saveDataOnFile(data, 'data.json');
+    await AppLog.instance.saveDataOnFile(data, 'data.json');
     
     const clips = parseXml(data);
 
-    AppLog.instance.saveDataOnFile(clips, 'converted-data.json');
+    await AppLog.instance.saveDataOnFile(clips, 'converted-data.json');
     
     let idx = 1;
 
@@ -45,4 +45,6 @@ export async function runCore(config: AppConfig) {
     }
 
     AppLog.instance.log(`Taglio progetto ${config.premiereXmlPath} terminato`)
+
+    AppLog.instance.end();
 }
