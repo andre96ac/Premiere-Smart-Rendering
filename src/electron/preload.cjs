@@ -7,5 +7,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     selectOutput: () => ipcRenderer.invoke("select-output"),
 
     startRendering: (options) =>
-        ipcRenderer.invoke("start-rendering", options)
+        ipcRenderer.invoke("start-rendering", options),
+
+     resizeWindow: (width, height) =>
+        ipcRenderer.send("resize-window", { width, height })
+
 });

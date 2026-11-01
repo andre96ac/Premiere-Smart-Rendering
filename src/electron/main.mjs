@@ -2,7 +2,8 @@ import {
     app,
     BrowserWindow,
     ipcMain,
-    dialog
+    dialog,
+    Menu
 } from "electron";
 
 import path from "node:path";
@@ -18,8 +19,7 @@ function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 850,
         height: 700,
-        minWidth: 700,
-        minHeight: 600,
+        useContentSize: true,
         title: "Premiere Smart Rendering",
 
         webPreferences: {
@@ -33,6 +33,8 @@ function createWindow() {
     mainWindow.loadFile(
         path.join(__dirname, "../renderer/index.html")
     );
+
+    Menu.setApplicationMenu(null);
 }
 
 ipcMain.handle("select-xml", async () => {
@@ -96,6 +98,27 @@ ipcMain.handle("start-rendering", async (_event, options) => {
     await runCore(config);
 
     return { success: true };
+});
+
+
+ipcMain.on("resize-window", (event, dimensions) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+
+    if (!window) return;
+
+    const { width, height } = dimensions;
+
+    if (
+        !Number.isFinite(width) ||
+        !Number.isFinite(height) ||
+        width <= 0 ||
+        height <= 0
+    ) return;
+
+    window.setContentSize(
+        Math.ceil(width),
+        Math.ceil(height)
+    );
 });
 
 app.whenReady().then(() => {
