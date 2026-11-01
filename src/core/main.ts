@@ -1,7 +1,4 @@
-import { runFfmpeg } from "./functions/ffmpeg.js";
-import { loadXml, parseXml } from "./functions/parseXml.js";
-import { saveJson } from "./functions/utils.js";
-import type { AppConfig } from "./types/types.js";
+
 
 import _appConfig from "./appConfig.json" with {type: "json"};
 import { loadConfig } from "./functions/appConfig.js";

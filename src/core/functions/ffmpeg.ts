@@ -1,7 +1,7 @@
 
 import { spawn } from "node:child_process";
 import type { Clip, FfmpegResult } from "../types/types.js";
-import { calcFinalFileName, createSequenceDir, existOnFileSystem } from "./utils.js";
+import { calcFinalFilePathName, createSequenceDir, existOnFileSystem } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -63,7 +63,7 @@ export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, cl
           await createSequenceDir(clip, baseOutputFolder);
         }
 
-        const finalFileName = calcFinalFileName(baseOutputFolder, clip, separateSequences);
+        const finalFileName = calcFinalFilePathName(baseOutputFolder, clip, separateSequences);
         const argOverwrite = overwrite? '-y' : '-n';
         const args = [
             "-hide_banner",

@@ -29,6 +29,14 @@ export function calcDurationSeconds(frameIn: number, frameOut:number, timeBase: 
 }
 
 
+export function calcFinalFileName(clip: Clip): string{
+
+    const splitFileName = clip.fileName.split('.');
+    const extension = splitFileName.pop();
+    return `${splitFileName.flat()}-${clip.clipCountForFile}.${extension}`;
+}
+
+
 /**
  * calcola il nome + percorso finale di output per il file risultante (percorso \ nome - indice di taglio estensione)
  * @param outputFolder cartella di destinazione
@@ -36,16 +44,11 @@ export function calcDurationSeconds(frameIn: number, frameOut:number, timeBase: 
  * @param includeSequenceFolder specifica se includere nel percorso finale anche la sottocartella con il nome della sequenza;
  * @returns 
  */
-export function calcFinalFileName(outputFolder: string, clip: Clip, includeSequenceFolder: boolean): string{
+export function calcFinalFilePathName(outputFolder: string, clip: Clip, includeSequenceFolder: boolean): string{
 
     //togliamo estensione e teniamola a parte
-    const splitFileName = clip.fileName.split('.');
-    const extension = splitFileName.pop();
-    const finalFileName = `${splitFileName.flat()}-${clip.clipCountForFile}.${extension}`;
-    const finalPath = includeSequenceFolder? `${outputFolder}\\${clip.sequenceName}\\${finalFileName}` : `${outputFolder}\\${finalFileName}`
-
-    AppLog.instance.log("NOME DI OUTPUT CALCOLATO: "+ finalPath)
-    return finalPath;
+    const finalFileName = calcFinalFileName(clip);
+    return includeSequenceFolder? `${outputFolder}\\${clip.sequenceName}\\${finalFileName}` : `${outputFolder}\\${finalFileName}`;
 }
 
 /**
