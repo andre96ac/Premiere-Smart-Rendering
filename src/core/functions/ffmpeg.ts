@@ -1,7 +1,7 @@
 
 import { spawn } from "node:child_process";
-import type { Clip, FfmpegResult } from "../types/types.js";
-import { calcFinalFilePathName, createSequenceDir, existOnFileSystem } from "./utils.js";
+import type { AppConfig, Clip, FfmpegResult } from "../types/types.js";
+import { calcFinalFileName, calcFinalFilePathName, createSequenceDir, existOnFileSystem } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -43,8 +43,6 @@ function _runFfmpeg(
   });
 }
 
-// export function runFfmpeg(ffmpegPath: string, sourcePath: string, outputPath:string, startSeconds: number, durationSeconds: number, overwrite?: boolean): Promise<FfmpegResult>
-// export function runFfmpeg(ffmpegPath: string, outputFolder: string, clip: Clip, overwrite?: boolean): Promise<FfmpegResult>
 
 /**
  * Esegue il taglio della clip passata e crea il nuovo file
@@ -55,7 +53,7 @@ function _runFfmpeg(
  * @param separateSequences specifica se salvare i file in sottocartelle diverse per ogni sequenza
  * @returns 
  */
-export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, clip: Clip, overwrite: boolean = true, separateSequences: boolean): Promise<FfmpegResult>{
+export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: string, clip: Clip, overwrite: boolean = true, separateSequences: boolean): Promise<FfmpegResult>{
 
 
         if(separateSequences){
@@ -102,3 +100,35 @@ export async function runFfmpeg(ffmpegPath: string, baseOutputFolder: string, cl
 
 }
 
+/**
+ * Processa l'intero array di clip con ffmpeg
+ * @param clips 
+ * @param config 
+ */
+export async function runFfmpeg(clips: Clip[], config: AppConfig) {
+    if(!existOnFileSystem(config.outputFolder)){
+      AppLog.instance.err(`Directory di output ${config.outputFolder} Non trovata`)
+      return;
+    }
+  
+    let idx = 1;
+
+      for (const clip of clips) {
+          AppLog.instance.log(`${idx} di ${clips.length} - Taglio della clip ${calcFinalFileName(clip)}`);
+          try {
+
+              await runFfmpegSingle(
+                  config.ffmpegExePath,
+                  config.outputFolder,
+                  clip,
+                  config.overWriteFiles,
+                  config.separateSequences
+              );
+          }
+          catch (e) {
+              const error: Error = e as Error;
+              AppLog.instance.err(error.message, error);
+          }
+          idx++;
+      }
+}
