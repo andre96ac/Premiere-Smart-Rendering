@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { AppConfig } from "../types/types.js";
+import { appConfigStructure, type AppConfig } from "../types/types.js";
 
 
 export async function loadConfig(configPath:string): Promise<AppConfig>{
@@ -16,6 +16,30 @@ export async function loadConfig(configPath:string): Promise<AppConfig>{
 
 
 function isValid(config: object):boolean{
-    // TODO
-    return true
+        if (typeof config !== "object" || config === null || Array.isArray(config)) {
+        return false;
+    }
+
+    const candidate = config as Record<string, unknown>;
+
+   
+
+    // Verifica che tutti i campi stringa siano presenti e non vuoti
+    for (const field of appConfigStructure.stringFields) {
+        if (
+            typeof candidate[field] !== "string" ||
+            candidate[field].trim().length === 0
+        ) {
+            return false;
+        }
+    }
+
+    // Verifica che tutti i campi booleani abbiano il tipo corretto
+    for (const field of appConfigStructure.booleanFields) {
+        if (typeof candidate[field] !== "boolean") {
+            return false;
+        }
+    }
+
+    return true;
 }

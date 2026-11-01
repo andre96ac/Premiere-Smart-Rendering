@@ -19,10 +19,24 @@ export type FfmpegResult = {
 
 export type AppConfig = {
   enableLog: boolean,
+  overWriteFiles: boolean,
+ separateSequences: boolean
   premiereXmlPath: string,
   outputFolder: string,
   ffmpegExePath: string,
   logFilesPath: string,
-   overWriteFiles: boolean,
-  separateSequences: boolean
 }
+
+export const appConfigStructure: {booleanFields: string[], stringFields: string[]} = {
+  booleanFields: [  
+      "enableLog",
+      "overWriteFiles",
+      "separateSequences"
+  ],
+  stringFields: [
+      "premiereXmlPath",
+      "outputFolder",
+      "ffmpegExePath",
+      "logFilesPath"
+  ],
+} as const;

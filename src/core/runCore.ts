@@ -1,10 +1,9 @@
 import { AppLog } from "./functions/AppLog.js";
-import { runFfmpeg, runFfmpegSingle } from "./functions/ffmpeg.js";
+import { runFfmpeg } from "./functions/ffmpeg.js";
 import { loadXml, parseXml } from "./functions/parseXml.js";
-import type { AppConfig, Clip } from "./types/types.js";
+import type { AppConfig } from "./types/types.js";
 
 import pkg from '../../package.json' with { type: 'json' };
-import { calcFinalFileName } from "./functions/utils.js";
 
 
 export async function runCore(config: AppConfig) {

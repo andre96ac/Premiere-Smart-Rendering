@@ -35,7 +35,7 @@ export class AppLog{
 
     private _baseLogFileStream: WriteStream | undefined;
 
-    private _enableLogging: boolean = false;
+    private _enableLogging: boolean = true;
 
     //#endregion
 
