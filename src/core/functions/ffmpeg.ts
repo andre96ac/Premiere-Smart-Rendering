@@ -85,12 +85,12 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
         else{
             if(overwrite){
 
-                AppLog.instance.warn(`File ${finalFileName} già presente... VERRA' SOVRASCRITTO`);
+                AppLog.instance.warn(`File "${finalFileName}" già presente... VERRA' SOVRASCRITTO`);
                 return _runFfmpeg(args, ffmpegPath)
             }
             else{
 
-                AppLog.instance.warn(`File ${finalFileName} già presente... VERRA' SKIPPATO`);
+                AppLog.instance.warn(`File "${finalFileName}" già presente... VERRA' SKIPPATO`);
                 return {
                         exitCode: 0,
                         stderr: '',
@@ -114,7 +114,7 @@ export async function runFfmpeg(clips: Clip[], config: AppConfig) {
     let idx = 1;
 
       for (const clip of clips) {
-          AppLog.instance.log(`${idx} di ${clips.length} - Taglio della clip ${calcFinalFileName(clip)}`);
+          AppLog.instance.log(`${idx} di ${clips.length} - Taglio della clip "${calcFinalFileName(clip)}"`);
           try {
 
               await runFfmpegSingle(

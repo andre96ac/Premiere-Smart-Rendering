@@ -11,7 +11,7 @@ export async function runCore(config: AppConfig) {
     await AppLog.instance.init(config.logFilesPath, config.enableLog);
 
     AppLog.instance.log(`###### PREMIERE SMART RENDERING V.${pkg.version} BY ${pkg.author} ######`)
-    AppLog.instance.log(`Avvio taglio progetto ${config.premiereXmlPath}...`)
+    AppLog.instance.log(`Avvio taglio progetto "${config.premiereXmlPath}"...`)
 
     const data = await loadXml(config.premiereXmlPath);
 
@@ -24,7 +24,7 @@ export async function runCore(config: AppConfig) {
     
     await runFfmpeg(clips, config);
 
-    AppLog.instance.log(`Taglio progetto ${config.premiereXmlPath} terminato`)
+    AppLog.instance.log(`Taglio progetto "${config.premiereXmlPath}" terminato`)
 
     AppLog.instance.end();
 }
