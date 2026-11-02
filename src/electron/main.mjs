@@ -93,7 +93,8 @@ ipcMain.handle("start-rendering", async (_event, options) => {
         logFilesPath: path.join(
             options.outputPath,
             "premiere-smart-rendering-log"
-        )
+        ),
+        maxConcurrencyProcesses: options.maxConcurrencyProcesses
     };
 
     await runCore(config);

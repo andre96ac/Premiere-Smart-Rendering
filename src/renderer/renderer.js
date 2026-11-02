@@ -6,6 +6,7 @@ const outputPath = document.getElementById("outputPath");
 const enableLog = document.getElementById("enableLog");
 const overWriteFiles = document.getElementById("overWriteFiles");
 const separateSequences = document.getElementById("separateSequences");
+const maxConcurrencyProcesses = document.getElementById("maxConcurrencyProcesses");
 
 const startButton = document.getElementById("startRendering");
 const status = document.getElementById("status");
@@ -62,7 +63,8 @@ startButton.addEventListener("click", async () => {
         outputPath: outputPath.value,
         enableLog: enableLog.checked,
         overWriteFiles: overWriteFiles.checked,
-        separateSequences: separateSequences.checked
+        separateSequences: separateSequences.checked,
+        maxConcurrencyProcesses: Number(maxConcurrencyProcesses.value)
     };
 
     startButton.disabled = true;
