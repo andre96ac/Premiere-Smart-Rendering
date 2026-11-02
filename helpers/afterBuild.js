@@ -1,6 +1,5 @@
-
 import {
-    rename,
+    cp,
     rm,
     access
 } from "node:fs/promises";
@@ -18,22 +17,33 @@ const targetDir = path.join(releaseDir, "Premiere Smart Rendering");
 
 const zipPath = path.join(
     releaseDir,
-    "Premiere Smart Rendering - Portable.zip"
+    "Premiere Smart Rendering.zip"
 );
 
 async function main() {
 
-    // Verifica che la build esista
     await access(sourceDir);
 
-    // Rimuove eventuali risultati precedenti
+    // Elimina i risultati precedenti
     await rm(targetDir, { recursive: true, force: true });
     await rm(zipPath, { force: true });
 
-    // Rinomina la cartella
-    await rename(sourceDir, targetDir);
+    // Copia la cartella
+    await cp(sourceDir, targetDir, {
+        recursive: true
+    });
 
-    console.log("Cartella rinominata.");
+    console.log("Cartella copiata.");
+
+    // Elimina la cartella originale
+    await rm(sourceDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 1000
+    });
+
+    console.log("Cartella originale rimossa.");
 
     // Crea lo ZIP
     await execFileAsync("powershell.exe", [
@@ -44,6 +54,18 @@ async function main() {
     ]);
 
     console.log("Archivio ZIP creato.");
+
+    
+    // Elimina la cartella rinominata
+    await rm(targetDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 1000
+    });
+
+    console.log("Cartella rinominata rimossa");
+
 }
 
 main().catch(error => {
