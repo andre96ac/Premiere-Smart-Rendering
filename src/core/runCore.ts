@@ -9,27 +9,35 @@ import { validateConfig } from "./functions/appConfig.js";
 
 export async function runCore(config: AppConfig) {
 
-    await AppLog.instance.init(config.logFilesPath, config.enableLog);
+    try{
 
-    AppLog.instance.log(`###### PREMIERE SMART RENDERING V.${pkg.version} BY ${pkg.author} ######`)
-    AppLog.instance.log(`Avvio taglio progetto "${config.premiereXmlPath}"...`)
-
-    validateConfig(config);
-
-    const data = await loadXml(config.premiereXmlPath);
-
-
-    await AppLog.instance.saveDataOnFile(data, 'data.json');
+        await AppLog.instance.init(config.logFilesPath, config.enableLog);
     
-    const clips = parseXml(data);
-
-    await AppLog.instance.saveDataOnFile(clips, 'converted-data.json');
+        AppLog.instance.log(`###### PREMIERE SMART RENDERING V.${pkg.version} BY ${pkg.author} ######`)
+        AppLog.instance.log(`Avvio taglio progetto "${config.premiereXmlPath}"...`)
     
-    await runFfmpeg(clips, config);
+        validateConfig(config);
+    
+        const data = await loadXml(config.premiereXmlPath);
+    
+    
+        await AppLog.instance.saveDataOnFile(data, 'data.json');
+        
+        const clips = parseXml(data);
+    
+        await AppLog.instance.saveDataOnFile(clips, 'converted-data.json');
+        
+        await runFfmpeg(clips, config);
+    
+        AppLog.instance.log(`Taglio progetto "${config.premiereXmlPath}" terminato`)
+    
+        AppLog.instance.end();
+    } catch(e){
+        const error = e as Error;
+        AppLog.instance.err(error instanceof Error ? error.message : error)
+        throw e;
+    }
 
-    AppLog.instance.log(`Taglio progetto "${config.premiereXmlPath}" terminato`)
-
-    AppLog.instance.end();
 }
 
 
