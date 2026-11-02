@@ -8,7 +8,7 @@ import { validateConfig } from "./functions/appConfig.js";
 import { createMainProgectDir } from "./functions/utils.js";
 
 
-export async function runCore(config: AppConfig) {
+export async function runCore(config: AppConfig, onProgress?: (completed: number, total: number) => void) {
 
     try{
 
@@ -30,7 +30,7 @@ export async function runCore(config: AppConfig) {
 
         await createMainProgectDir(config.outputFolder);
         
-        await runFfmpeg(clips, config);
+        await runFfmpeg(clips, config, onProgress);
     
         AppLog.instance.log(`Taglio progetto "${config.premiereXmlPath}" terminato`)
     

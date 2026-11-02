@@ -12,10 +12,31 @@ const createSubfolderCheckbox = document.getElementById("createSubfolder");
 const subfolderNameInput = document.getElementById("subfolderName");
 
 
+const progressContainer = document.getElementById("progressContainer");
+const progressFill = document.getElementById("progressFill");
+const progressPercentage = document.getElementById("progressPercentage");
+const progressText = document.getElementById("progressText");
+
+
 const startButton = document.getElementById("startRendering");
 const status = document.getElementById("status");
 
 version.textContent = `Electron ${window.electronAPI.getVersion()}`;
+
+
+
+
+const removeProgressListener = window.electronAPI.onRenderProgress((progress) => {
+
+    progressContainer.hidden = false;
+
+    progressFill.style.width = `${progress.percentage}%`;
+    progressPercentage.textContent = `${progress.percentage}%`;
+
+    progressText.textContent =
+        `Clip completate: ${progress.completed} / ${progress.total}`;
+
+});
 
 function updateStartButton() {
     startButton.disabled =
@@ -31,12 +52,17 @@ function resizeWindowToFitContent() {
     window.electronAPI.resizeWindow(width, height);
 }
 
+function getFolderPath(filePath) {
+  return filePath.replace(/[\\/][^\\/]*$/, "");
+}
+
 document.getElementById("selectXml").addEventListener("click", async () => {
     try {
         const selectedPath = await window.electronAPI.selectXml();
 
         if (selectedPath) {
             xmlPath.value = selectedPath;
+            outputPath.value = getFolderPath(selectedPath);
             status.textContent = "File XML selezionato";
         }
 
@@ -75,10 +101,19 @@ startButton.addEventListener("click", async () => {
     startButton.disabled = true;
     status.textContent = "Rendering in corso...";
 
+
+    progressContainer.hidden = false;
+    progressFill.style.width = "0%";
+    progressPercentage.textContent = "0%";
+    progressText.textContent = "Preparazione rendering...";
+
     try {
         await window.electronAPI.startRendering(options);
 
+        progressFill.style.width = "100%";
+        progressPercentage.textContent = "100%";
         status.textContent = "Rendering completato!";
+
     } catch (error) {
         status.textContent = `Errore durante il rendering: ${error.message}`;
     } finally {
@@ -95,4 +130,12 @@ createSubfolderCheckbox.addEventListener("change", () => {
 });
 
 updateStartButton();
-resizeWindowToFitContent();
+
+const container = document.querySelector(".container");
+
+const resizeObserver = new ResizeObserver(() => {
+  resizeWindowToFitContent();
+});
+
+resizeObserver.observe(container);
+// resizeWindowToFitContent();

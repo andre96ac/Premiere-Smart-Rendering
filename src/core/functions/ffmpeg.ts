@@ -140,19 +140,30 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
  * @param clips 
  * @param config 
  */
-export async function runFfmpeg(
-    clips: Clip[],
-    config: AppConfig
-): Promise<void> {
+export async function runFfmpeg(clips: Clip[], config: AppConfig, onProgress?: (completed: number, total: number) => void): Promise<void> {
 
 
 
+  let completed = 0;
+  const total = clips.length;
 
-  await runConcurrent(
-      clips,
-      config.maxConcurrencyProcesses,
-      async (clip: Clip) => {
-          await runFfmpegSingle(config.ffmpegExePath, config.outputFolder, clip, config.overWriteFiles, config.separateSequences);
+  if (total === 0) {
+      onProgress?.(0, 0);
+      return;
+  }
+
+
+
+  await runConcurrent(clips, config.maxConcurrencyProcesses, async (clip: Clip) => {
+
+          try{
+            await runFfmpegSingle(config.ffmpegExePath, config.outputFolder, clip, config.overWriteFiles, config.separateSequences);
+          }
+          finally{
+            completed++;
+            onProgress?.(completed, total);
+
+          }
       }
   );
 }

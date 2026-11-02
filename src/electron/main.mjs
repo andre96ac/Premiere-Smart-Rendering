@@ -59,7 +59,7 @@ ipcMain.handle("select-output", async () => {
     return result.canceled ? null : result.filePaths[0];
 });
 
-ipcMain.handle("start-rendering", async (_event, options) => {
+ipcMain.handle("start-rendering", async (event, options) => {
     if (
         !options ||
         typeof options.xmlPath !== "string" ||
@@ -99,7 +99,19 @@ ipcMain.handle("start-rendering", async (_event, options) => {
         maxConcurrencyProcesses: options.maxConcurrencyProcesses
     };
 
-    await runCore(config);
+
+    await runCore(config, (completed, total) => {
+        if (!event.sender.isDestroyed()) {
+            event.sender.send("render-progress", {
+                completed,
+                total,
+                percentage: total > 0
+                    ? Math.round((completed / total) * 100)
+                    : 100
+            });
+        }
+
+    }); 
 
     return { success: true };
 });
