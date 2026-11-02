@@ -11,8 +11,7 @@
     "start:app": "npm run build && electron .",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:portable": "npm run build && electron-builder --win portable"
-
+    "dist:portable": "npm run build && electron-builder --win dir && node helpers/afterBuild.js "
   },
   "dependencies": {
     "fast-xml-parser": "^5.11.2"
@@ -23,8 +22,7 @@
     "electron-builder": "^26.18.0",
     "typescript": "^7.0.2"
   },
-
-   "build": {
+  "build": {
     "appId": "com.andreacuppini.premieresmartrendering",
     "productName": "Premiere Smart Rendering",
     "directories": {
@@ -50,6 +48,9 @@
       "target": [
         "nsis"
       ]
+    },
+    "portable": {
+    "splashImage": "resources/icon.png"
     },
     "nsis": {
       "oneClick": false,
