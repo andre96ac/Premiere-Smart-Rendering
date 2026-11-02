@@ -17,7 +17,7 @@ const targetDir = path.join(releaseDir, "Premiere Smart Rendering");
 
 const zipPath = path.join(
     releaseDir,
-    "Premiere Smart Rendering.zip"
+    "Premiere Smart Rendering - Portable.zip"
 );
 
 async function main() {
