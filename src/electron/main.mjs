@@ -35,7 +35,7 @@ function createWindow() {
         path.join(__dirname, "../renderer/index.html")
     );
 
-    Menu.setApplicationMenu(null);
+    // Menu.setApplicationMenu(null);
 }
 
 ipcMain.handle("select-xml", async () => {
@@ -83,15 +83,17 @@ ipcMain.handle("start-rendering", async (_event, options) => {
         );
     }
 
+    const finalOutputFolder = options.subFolderName? path.join(options.outputPath, options.subFolderName) : options.outputPath;
+
     const config = {
         premiereXmlPath: options.xmlPath,
-        outputFolder: options.outputPath,
+        outputFolder: finalOutputFolder,
         enableLog: options.enableLog,
         overWriteFiles: options.overWriteFiles,
         separateSequences: options.separateSequences,
         ffmpegExePath,
         logFilesPath: path.join(
-            options.outputPath,
+            finalOutputFolder,
             "premiere-smart-rendering-log"
         ),
         maxConcurrencyProcesses: options.maxConcurrencyProcesses

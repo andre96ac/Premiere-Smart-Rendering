@@ -8,6 +8,8 @@ const overWriteFiles = document.getElementById("overWriteFiles");
 const separateSequences = document.getElementById("separateSequences");
 const concurrencySlider = document.getElementById("maxConcurrencyProcesses");
 const concurrencyValue = document.getElementById("concurrencyValue");
+const createSubfolderCheckbox = document.getElementById("createSubfolder");
+const subfolderNameInput = document.getElementById("subfolderName");
 
 
 const startButton = document.getElementById("startRendering");
@@ -66,7 +68,8 @@ startButton.addEventListener("click", async () => {
         enableLog: enableLog.checked,
         overWriteFiles: overWriteFiles.checked,
         separateSequences: separateSequences.checked,
-        maxConcurrencyProcesses: Number(concurrencySlider.value)
+        maxConcurrencyProcesses: Number(concurrencySlider.value),
+        subFolderName: createSubfolderCheckbox.checked? subfolderNameInput.value.trim() : ""
     };
 
     startButton.disabled = true;
@@ -85,6 +88,10 @@ startButton.addEventListener("click", async () => {
 
 concurrencySlider.addEventListener("input", () => {
     concurrencyValue.textContent = concurrencySlider.value;
+});
+
+createSubfolderCheckbox.addEventListener("change", () => {
+  subfolderNameInput.disabled = !createSubfolderCheckbox.checked;
 });
 
 updateStartButton();
