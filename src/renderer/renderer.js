@@ -6,7 +6,9 @@ const outputPath = document.getElementById("outputPath");
 const enableLog = document.getElementById("enableLog");
 const overWriteFiles = document.getElementById("overWriteFiles");
 const separateSequences = document.getElementById("separateSequences");
-const maxConcurrencyProcesses = document.getElementById("maxConcurrencyProcesses");
+const concurrencySlider = document.getElementById("maxConcurrencyProcesses");
+const concurrencyValue = document.getElementById("concurrencyValue");
+
 
 const startButton = document.getElementById("startRendering");
 const status = document.getElementById("status");
@@ -64,7 +66,7 @@ startButton.addEventListener("click", async () => {
         enableLog: enableLog.checked,
         overWriteFiles: overWriteFiles.checked,
         separateSequences: separateSequences.checked,
-        maxConcurrencyProcesses: Number(maxConcurrencyProcesses.value)
+        maxConcurrencyProcesses: Number(concurrencySlider.value)
     };
 
     startButton.disabled = true;
@@ -79,6 +81,10 @@ startButton.addEventListener("click", async () => {
     } finally {
         updateStartButton();
     }
+});
+
+concurrencySlider.addEventListener("input", () => {
+    concurrencyValue.textContent = concurrencySlider.value;
 });
 
 updateStartButton();

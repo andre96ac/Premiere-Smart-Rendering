@@ -89,13 +89,15 @@
 
             <div class="form-group">
                 <label for="maxConcurrencyProcesses">
-                    Processi FFmpeg contemporanei
+                    Processi FFmpeg contemporanei:
+                    <span id="concurrencyValue">2</span>
                 </label>
+
                 <input
-                    type="number"
+                    type="range"
                     id="maxConcurrencyProcesses"
                     min="1"
-                    max="16"
+                    max="8"
                     step="1"
                     value="3"
                 >
