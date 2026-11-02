@@ -5,7 +5,7 @@ import { calcFinalFileName, calcFinalFilePathName, createSequenceDir, existOnFil
 import { AppLog } from "./AppLog.js";
 
 
-function _runFfmpeg(
+function _runFfmpegSingle(
   args: string[],
   ffmpegPath = "ffmpeg"
 ): Promise<FfmpegResult> {
@@ -82,13 +82,13 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
 
         const fileExist = await(existOnFileSystem(finalFileName));
         if(!fileExist){
-            return _runFfmpeg(args, ffmpegPath)
+            return _runFfmpegSingle(args, ffmpegPath)
         }
         else{
             if(overwrite){
 
                 AppLog.instance.warn(`File "${finalFileName}" già presente... VERRA' SOVRASCRITTO`);
-                return _runFfmpeg(args, ffmpegPath)
+                return _runFfmpegSingle(args, ffmpegPath)
             }
             else{
 

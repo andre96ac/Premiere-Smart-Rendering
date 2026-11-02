@@ -152,8 +152,8 @@ export async function runConcurrent<T>(
 
             try {
                 if(!!item){
+                  AppLog.instance.log(`${nextIndex} di ${items.length} - Taglio della clip "${calcFinalFileName(item as unknown as Clip)}"`);
                   await task(item);
-                  AppLog.instance.log(`${nextIndex + 1 - maxConcurrency} di ${items.length} - Taglio della clip "${calcFinalFileName(item as unknown as Clip)}"`);
 
                 }
 
