@@ -8,16 +8,20 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+
+const buildName = "Premiere Smart Rendering - Portable";
+
+
 const execFileAsync = promisify(execFile);
 
 const releaseDir = path.resolve("release");
 
 const sourceDir = path.join(releaseDir, "win-unpacked");
-const targetDir = path.join(releaseDir, "Premiere Smart Rendering");
+const targetDir = path.join(releaseDir, buildName);
 
 const zipPath = path.join(
     releaseDir,
-    "Premiere Smart Rendering - Portable.zip"
+    `${buildName}.zip`
 );
 
 async function main() {
