@@ -185,12 +185,6 @@ footer {
   width: 100%;
   box-sizing: border-box;
 
-  /* padding: 9px 12px;
-  border: 1px solid #555;
-  border-radius: 6px;
-
-  background-color: #2d2d2d;
-  color: #ffffff; */
 
   transition: background-color 0.2s, opacity 0.2s;
 }

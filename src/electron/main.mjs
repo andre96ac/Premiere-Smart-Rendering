@@ -35,7 +35,7 @@ function createWindow() {
         path.join(__dirname, "../renderer/index.html")
     );
 
-    // Menu.setApplicationMenu(null);
+    Menu.setApplicationMenu(null);
 }
 
 ipcMain.handle("select-xml", async () => {
