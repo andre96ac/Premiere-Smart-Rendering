@@ -162,6 +162,7 @@ export async function runFfmpeg(clips: Clip[], config: AppConfig, onProgress?: (
           finally{
             completed++;
             onProgress?.(completed, total);
+            AppLog.instance.log(`${completed} di ${total} - Clip "${calcFinalFileName(clip)} tagliata con successo!"`);
 
           }
       }
