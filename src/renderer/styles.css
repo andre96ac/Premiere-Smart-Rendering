@@ -74,6 +74,10 @@ input[type="text"] {
     border: 0px solid #555555;
     color: white;
 }
+input[readonly]{
+    outline: none;
+    cursor: default;
+}
 
 button {
     padding: 10px 17px;
