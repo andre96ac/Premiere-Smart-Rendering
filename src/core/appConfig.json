@@ -5,5 +5,7 @@
   "ffmpegExePath": "D:\\Programmi\\FFmpeg\\ffmpeg.exe",
   "logFilesPath": "./log",
   "overWriteFiles": true,
-  "separateSequences": true
+  "separateSequences": false,
+  "maxConcurrencyProcesses": 3
+  
 }

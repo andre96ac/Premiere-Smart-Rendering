@@ -1,7 +1,7 @@
 
 import { spawn } from "node:child_process";
 import type { AppConfig, Clip, FfmpegResult } from "../types/types.js";
-import { calcFinalFileName, calcFinalFilePathName, createSequenceDir, existOnFileSystem } from "./utils.js";
+import { calcFinalFileName, calcFinalFilePathName, createSequenceDir, existOnFileSystem, runConcurrent } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -56,6 +56,8 @@ function _runFfmpeg(
 export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: string, clip: Clip, overwrite: boolean = true, separateSequences: boolean): Promise<FfmpegResult>{
 
 
+
+
         if(separateSequences){
           //se siamo in modalità cartelle separate, creo prima la cartella
           await createSequenceDir(clip, baseOutputFolder);
@@ -100,35 +102,57 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
 
 }
 
+// /**
+//  * Processa l'intero array di clip con ffmpeg VERSIONE VECCHIA SEQUENZIALE
+//  * @param clips 
+//  * @param config 
+//  */
+// export async function runFfmpeg(clips: Clip[], config: AppConfig) {
+//     if(! await existOnFileSystem(config.outputFolder)){
+//       AppLog.instance.err(`Directory di output ${config.outputFolder} Non trovata`)
+//       return;
+//     }
+  
+//     let idx = 1;
+
+//       for (const clip of clips) {
+//           AppLog.instance.log(`${idx} di ${clips.length} - Taglio della clip "${calcFinalFileName(clip)}"`);
+//           try {
+
+//               await runFfmpegSingle(
+//                   config.ffmpegExePath,
+//                   config.outputFolder,
+//                   clip,
+//                   config.overWriteFiles,
+//                   config.separateSequences
+//               );
+//           }
+//           catch (e) {
+//               const error: Error = e as Error;
+//               AppLog.instance.err(error.message, error);
+//           }
+//           idx++;
+//       }
+// }
+
 /**
  * Processa l'intero array di clip con ffmpeg
  * @param clips 
  * @param config 
  */
-export async function runFfmpeg(clips: Clip[], config: AppConfig) {
-    if(! await existOnFileSystem(config.outputFolder)){
-      AppLog.instance.err(`Directory di output ${config.outputFolder} Non trovata`)
-      return;
-    }
-  
-    let idx = 1;
+export async function runFfmpeg(
+    clips: Clip[],
+    config: AppConfig
+): Promise<void> {
 
-      for (const clip of clips) {
-          AppLog.instance.log(`${idx} di ${clips.length} - Taglio della clip "${calcFinalFileName(clip)}"`);
-          try {
 
-              await runFfmpegSingle(
-                  config.ffmpegExePath,
-                  config.outputFolder,
-                  clip,
-                  config.overWriteFiles,
-                  config.separateSequences
-              );
-          }
-          catch (e) {
-              const error: Error = e as Error;
-              AppLog.instance.err(error.message, error);
-          }
-          idx++;
+
+
+  await runConcurrent(
+      clips,
+      config.maxConcurrencyProcesses,
+      async (clip: Clip) => {
+          await runFfmpegSingle(config.ffmpegExePath, config.outputFolder, clip, config.overWriteFiles, config.separateSequences);
       }
+  );
 }

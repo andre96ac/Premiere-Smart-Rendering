@@ -111,3 +111,51 @@ export function findFilePath(fileName: string, xmlData: XmlPremiereFile): string
   }
   return filePath;
 }
+
+
+
+
+
+export async function runConcurrent<T>(
+    items: T[],
+    maxConcurrency: number,
+    task: (item: T) => Promise<void>
+): Promise<void> {
+
+    if (!Number.isInteger(maxConcurrency) || maxConcurrency < 1) {
+        throw new Error("maxConcurrency deve essere almeno 1");
+    }
+
+    let nextIndex = 0;
+
+    async function worker(): Promise<void> {
+
+        while (true) {
+
+            const index = nextIndex++;
+
+            if (index >= items.length) return;
+
+            const item = items[index];
+
+            try {
+                if(!!item){
+                  await task(item);
+                  AppLog.instance.log(`${nextIndex + 1 - maxConcurrency} di ${items.length} - Taglio della clip "${calcFinalFileName(item as unknown as Clip)}"`);
+
+                }
+
+            } catch (error) {
+
+              AppLog.instance.err(`Errore durante l'elaborazione della clip ${index + 1}:`, error instanceof Error ? error : new Error(String(error)));
+            }
+        }
+    }
+
+    const workers = Array.from(
+        { length: Math.min(maxConcurrency, items.length) },
+        () => worker()
+    );
+
+    await Promise.all(workers);
+}
