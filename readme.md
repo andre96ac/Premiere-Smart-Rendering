@@ -113,6 +113,5 @@ npm run dist:portable
 
 **PREMIERE SMART RENDERING**
 
-*Keep the footage that matters. Leave everything else behind.*
 
 </div>
