@@ -25,9 +25,10 @@ export type AppConfig = {
   outputFolder: string,
   ffmpegExePath: string,
   logFilesPath: string,
+  maxConcurrencyProcesses: number
 }
 
-export const appConfigStructure: {booleanFields: string[], stringFields: string[]} = {
+export const appConfigStructure: {booleanFields: string[], stringFields: string[], numberFields: string[]} = {
   booleanFields: [  
       "enableLog",
       "overWriteFiles",
@@ -39,4 +40,7 @@ export const appConfigStructure: {booleanFields: string[], stringFields: string[
       "ffmpegExePath",
       "logFilesPath"
   ],
+  numberFields: [
+    "maxConcurrencyProcesses"
+  ]
 } as const;

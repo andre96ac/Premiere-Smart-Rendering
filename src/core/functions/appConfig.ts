@@ -14,6 +14,12 @@ export async function loadConfig(configPath:string): Promise<AppConfig>{
     return config as AppConfig;
 }
 
+export function validateConfig(config: AppConfig){
+    if(!isValid(config)){
+        throw new Error("Configurazione non valida");
+    }
+}
+
 
 function isValid(config: object):boolean{
         if (typeof config !== "object" || config === null || Array.isArray(config)) {
@@ -37,6 +43,12 @@ function isValid(config: object):boolean{
     // Verifica che tutti i campi booleani abbiano il tipo corretto
     for (const field of appConfigStructure.booleanFields) {
         if (typeof candidate[field] !== "boolean") {
+            return false;
+        }
+    }
+
+    for (const field of appConfigStructure.numberFields){
+        if(typeof candidate[field] !== 'number'){
             return false;
         }
     }

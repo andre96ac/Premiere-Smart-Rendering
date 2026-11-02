@@ -4,6 +4,7 @@ import { loadXml, parseXml } from "./functions/parseXml.js";
 import type { AppConfig } from "./types/types.js";
 
 import pkg from '../../package.json' with { type: 'json' };
+import { validateConfig } from "./functions/appConfig.js";
 
 
 export async function runCore(config: AppConfig) {
@@ -12,6 +13,8 @@ export async function runCore(config: AppConfig) {
 
     AppLog.instance.log(`###### PREMIERE SMART RENDERING V.${pkg.version} BY ${pkg.author} ######`)
     AppLog.instance.log(`Avvio taglio progetto "${config.premiereXmlPath}"...`)
+
+    validateConfig(config);
 
     const data = await loadXml(config.premiereXmlPath);
 
