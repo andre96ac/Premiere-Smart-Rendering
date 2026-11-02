@@ -11,12 +11,17 @@ const concurrencyValue = document.getElementById("concurrencyValue");
 const createSubfolderCheckbox = document.getElementById("createSubfolder");
 const subfolderNameInput = document.getElementById("subfolderName");
 
-
+// ProgressBar
 const progressContainer = document.getElementById("progressContainer");
 const progressFill = document.getElementById("progressFill");
 const progressPercentage = document.getElementById("progressPercentage");
 const progressText = document.getElementById("progressText");
 
+
+// Modal warning
+const warningModal = document.getElementById("warningModal");
+const cancelWarning = document.getElementById("cancelWarning");
+const confirmWarning = document.getElementById("confirmWarning");
 
 const startButton = document.getElementById("startRendering");
 const status = document.getElementById("status");
@@ -24,7 +29,8 @@ const status = document.getElementById("status");
 version.textContent = `Electron ${window.electronAPI.getVersion()}`;
 
 
-
+//ABILITA L'AUTORIDIMENSIONAMENTO (DISABILITARE PER DEBUG)
+const enableAutoResizing = true
 
 const removeProgressListener = window.electronAPI.onRenderProgress((progress) => {
 
@@ -125,8 +131,34 @@ concurrencySlider.addEventListener("input", () => {
     concurrencyValue.textContent = concurrencySlider.value;
 });
 
+
+
 createSubfolderCheckbox.addEventListener("change", () => {
-  subfolderNameInput.disabled = !createSubfolderCheckbox.checked;
+  if (!createSubfolderCheckbox.checked) {
+    warningModal.hidden = false;
+    return;
+  }
+
+  subfolderNameInput.disabled = false;
+});
+
+cancelWarning.addEventListener("click", () => {
+  createSubfolderCheckbox.checked = true;
+  warningModal.hidden = true;
+  subfolderNameInput.disabled = false;
+});
+
+confirmWarning.addEventListener("click", () => {
+  warningModal.hidden = true;
+  subfolderNameInput.disabled = true;
+});
+
+warningModal.addEventListener("click", (event) => {
+  if (event.target === warningModal) {
+    createSubfolderCheckbox.checked = true;
+    warningModal.hidden = true;
+    subfolderNameInput.disabled = false;
+  }
 });
 
 updateStartButton();
@@ -134,8 +166,9 @@ updateStartButton();
 const container = document.querySelector(".container");
 
 const resizeObserver = new ResizeObserver(() => {
-  resizeWindowToFitContent();
+    if(enableAutoResizing){
+        resizeWindowToFitContent();
+    }
 });
 
 resizeObserver.observe(container);
-// resizeWindowToFitContent();

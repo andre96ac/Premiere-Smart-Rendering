@@ -36,7 +36,6 @@ body {
 
 .panel {
     background: #2b2b2b;
-    border: 1px solid #3c3c3c;
     border-radius: 8px;
     padding: 22px;
     margin-bottom: 20px;
@@ -72,7 +71,7 @@ input[type="text"] {
     min-width: 0;
     padding: 11px;
     background: #1e1e1e;
-    border: 1px solid #555555;
+    border: 0px solid #555555;
     color: white;
 }
 
@@ -207,6 +206,8 @@ footer {
 }
 
 
+
+/* Progress Bar */
 .progress-bar {
     width: 100%;
     height: 18px;
@@ -234,4 +235,86 @@ footer {
 
 .progress-container {
     margin-top: 25px;
+}
+
+
+/* Modal Warning */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal {
+  width: 100%;
+  max-width: 400px;
+  background: #252a33;
+  /* border: 1px solid #414752; */
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.warning-icon {
+  color: #e9b65b;
+  font-size: 24px;
+  padding-bottom: 5px;
+}
+
+.modal p {
+  color: #c3c7ce;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.modal-button {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal-button.cancel {
+  background: #414752;
+  color: #fff;
+}
+
+.modal-button.confirm {
+  background: #bd8735;
+  color: #171717;
+}
+
+.modal-button:hover {
+  filter: brightness(1.12);
 }

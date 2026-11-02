@@ -15,6 +15,9 @@ import { runCore } from "../../dist/core/runCore.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+//abilita o disabilita il menù per debug.
+const enableMenu = false;
+
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 850,
@@ -35,7 +38,9 @@ function createWindow() {
         path.join(__dirname, "../renderer/index.html")
     );
 
-    Menu.setApplicationMenu(null);
+    if(!enableMenu){
+        Menu.setApplicationMenu(null);
+    }
 }
 
 ipcMain.handle("select-xml", async () => {
