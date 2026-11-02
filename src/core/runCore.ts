@@ -5,6 +5,7 @@ import type { AppConfig } from "./types/types.js";
 
 import pkg from '../../package.json' with { type: 'json' };
 import { validateConfig } from "./functions/appConfig.js";
+import { createMainProgectDir } from "./functions/utils.js";
 
 
 export async function runCore(config: AppConfig) {
@@ -26,6 +27,8 @@ export async function runCore(config: AppConfig) {
         const clips = parseXml(data);
     
         await AppLog.instance.saveDataOnFile(clips, 'converted-data.json');
+
+        await createMainProgectDir(config.outputFolder);
         
         await runFfmpeg(clips, config);
     

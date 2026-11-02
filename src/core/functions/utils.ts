@@ -79,6 +79,18 @@ export async function createSequenceDir(clip: Clip, baseOutputFolder: string): P
 
 }
 
+/**
+ * Crea la directory principale di output del progetto
+ * @param baseOutputFolder percorso directory principale
+ */
+export async function createMainProgectDir(baseOutputFolder: string){
+  const pathAlreadyExistOnFs = await existOnFileSystem(baseOutputFolder);
+  if(!pathAlreadyExistOnFs){
+    await mkdir(baseOutputFolder, { recursive: true });
+  }
+  
+}
+
 
 /**
  * salva un json su file (x debug)
