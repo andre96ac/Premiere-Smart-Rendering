@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 //abilita o disabilita il menù per debug.
-const enableMenu = false;
+const enableMenu = true;
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -133,8 +133,11 @@ ipcMain.on("resize-window", (event, dimensions) => {
         !Number.isFinite(width) ||
         !Number.isFinite(height) ||
         width <= 0 ||
-        height <= 0
+        height <= 0 ||
+        window.webContents.isDevToolsOpened() ||
+        !window || window.isDestroyed()
     ) return;
+
 
     window.setContentSize(
         Math.ceil(width),
