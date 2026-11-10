@@ -14,6 +14,7 @@ export async function loadXml(path: string): Promise<XmlPremiereFile>{
             "xmeml.project.children.sequence",
             "xmeml.project.children.sequence.media.video.track",
             "xmeml.project.children.sequence.media.video.track.clipitem",
+            "xmeml.project.children.clip"
         ]
 
 
