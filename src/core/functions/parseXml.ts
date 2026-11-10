@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 import type { Sequence, SequenceClipItem, VideoTrack, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { convertUrlToPath } from "./convertUrlToPath.js";
-import { calcDurationSeconds, calcStartSeconds, findFilePath, saveJson } from "./utils.js";
+import { calcDurationSeconds, calcStartSeconds, findFilePath } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -119,7 +119,8 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
                     el.out === undefined || 
                     el.rate?.timebase === undefined || 
                     el.name === undefined || 
-                    finalUrl === undefined
+                    finalUrl === undefined ||
+                    el.in >= el.out
                 ) {
                 throw new Error(`Dati clip non validi o incompleti per l'elemento: ${el.name ?? 'Sconosciuto'}`);
             }
