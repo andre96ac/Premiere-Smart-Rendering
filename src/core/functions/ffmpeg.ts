@@ -102,38 +102,7 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
 
 }
 
-// /**
-//  * Processa l'intero array di clip con ffmpeg VERSIONE VECCHIA SEQUENZIALE
-//  * @param clips 
-//  * @param config 
-//  */
-// export async function runFfmpeg(clips: Clip[], config: AppConfig) {
-//     if(! await existOnFileSystem(config.outputFolder)){
-//       AppLog.instance.err(`Directory di output ${config.outputFolder} Non trovata`)
-//       return;
-//     }
-  
-//     let idx = 1;
 
-//       for (const clip of clips) {
-//           AppLog.instance.log(`${idx} di ${clips.length} - Taglio della clip "${calcFinalFileName(clip)}"`);
-//           try {
-
-//               await runFfmpegSingle(
-//                   config.ffmpegExePath,
-//                   config.outputFolder,
-//                   clip,
-//                   config.overWriteFiles,
-//                   config.separateSequences
-//               );
-//           }
-//           catch (e) {
-//               const error: Error = e as Error;
-//               AppLog.instance.err(error.message, error);
-//           }
-//           idx++;
-//       }
-// }
 
 /**
  * Processa l'intero array di clip con ffmpeg
@@ -158,12 +127,14 @@ export async function runFfmpeg(clips: Clip[], config: AppConfig, onProgress?: (
 
           try{
             await runFfmpegSingle(config.ffmpegExePath, config.outputFolder, clip, config.overWriteFiles, config.separateSequences);
+            AppLog.instance.log(`${completed} di ${total} - Clip "${calcFinalFileName(clip)} elaborata correttaente!"`);
+          }
+          catch(error){
+            AppLog.instance.err(`${completed} di ${total} - Errore durante il taglio della clip "${calcFinalFileName(clip)}"`,error instanceof Error ? error : new Error(String(error)));
           }
           finally{
             completed++;
             onProgress?.(completed, total);
-            AppLog.instance.log(`${completed} di ${total} - Clip "${calcFinalFileName(clip)} tagliata con successo!"`);
-
           }
       }
   );
