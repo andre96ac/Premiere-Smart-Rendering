@@ -134,8 +134,8 @@ ipcMain.on("resize-window", (event, dimensions) => {
         !Number.isFinite(height) ||
         width <= 0 ||
         height <= 0 ||
-        window.webContents.isDevToolsOpened() ||
-        !window || window.isDestroyed()
+        !window || window.isDestroyed() || 
+        window.webContents.isDevToolsOpened()
     ) return;
 
 

@@ -95,10 +95,33 @@ export class AppLog{
 
     }
 
-    public end(){
-        if(this._inited)
-        this._baseLogFileStream?.end();
-        this._baseLogFileStream = undefined;
+    public end(): Promise<void>{
+
+        
+        const stream = this._baseLogFileStream;
+
+        if(this._inited){
+
+            return  new Promise((res, rej) => {
+                
+                this._baseLogFileStream = undefined;
+    
+    
+    
+                stream?.end((err: Error | null) => {
+                    if(!!err){
+                        rej(err)
+                    }
+                    else{
+                        res();
+                    }
+                });
+            })
+        }
+        else {
+            return Promise.resolve();
+        } 
+
     }
 
 

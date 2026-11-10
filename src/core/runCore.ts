@@ -40,7 +40,7 @@ export async function runCore(config: AppConfig, onProgress?: (completed: number
         throw e;
     }
     finally{
-        AppLog.instance.end();
+        await AppLog.instance.end();
     }
 
 
