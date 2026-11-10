@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 //abilita o disabilita il menù per debug.
-const enableMenu = true;
+const enableMenu = false;
 
 function createWindow() {
     const mainWindow = new BrowserWindow({

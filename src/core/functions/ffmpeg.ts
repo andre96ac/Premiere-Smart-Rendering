@@ -127,10 +127,10 @@ export async function runFfmpeg(clips: Clip[], config: AppConfig, onProgress?: (
 
           try{
             await runFfmpegSingle(config.ffmpegExePath, config.outputFolder, clip, config.overWriteFiles, config.separateSequences);
-            AppLog.instance.log(`${completed} di ${total} - Clip "${calcFinalFileName(clip)} elaborata correttaente!"`);
+            AppLog.instance.log(`${completed+1} di ${total} - Clip "${calcFinalFileName(clip)} Elaborata correttaente!"`);
           }
           catch(error){
-            AppLog.instance.err(`${completed} di ${total} - Errore durante il taglio della clip "${calcFinalFileName(clip)}"`,error instanceof Error ? error : new Error(String(error)));
+            AppLog.instance.err(`${completed+1} di ${total} - Errore durante il taglio della clip "${calcFinalFileName(clip)}"`,error instanceof Error ? error : new Error(String(error)));
           }
           finally{
             completed++;

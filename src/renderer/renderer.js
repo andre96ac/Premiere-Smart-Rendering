@@ -32,7 +32,7 @@ version.textContent = `Electron ${window.electronAPI.getVersion()}`;
 //ABILITA L'AUTORIDIMENSIONAMENTO (DISABILITARE PER DEBUG)
 const enableAutoResizing = true
 
-const removeProgressListener = window.electronAPI.onRenderProgress((progress) => {
+window.electronAPI.onRenderProgress((progress) => {
 
     progressContainer.hidden = false;
 
