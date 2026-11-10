@@ -31,7 +31,7 @@ export async function loadXml(path: string): Promise<XmlPremiereFile>{
         
         return parsedXml;
     } catch(e){
-        throw new Error(`ERRORE - FILE XML NON TROVATO`, {cause: e});
+        throw new Error(`Impossibile caricare o interpretare il file XML: ${path}`, { cause: e });
     }
     
 
