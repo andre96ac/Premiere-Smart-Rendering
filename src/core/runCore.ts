@@ -34,12 +34,15 @@ export async function runCore(config: AppConfig, onProgress?: (completed: number
     
         AppLog.instance.log(`Taglio progetto "${config.premiereXmlPath}" terminato`)
     
-        AppLog.instance.end();
     } catch(e){
         const error = e as Error;
         AppLog.instance.err(error instanceof Error ? error.message : error)
         throw e;
     }
+    finally{
+        AppLog.instance.end();
+    }
+
 
 }
 

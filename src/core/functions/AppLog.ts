@@ -98,6 +98,7 @@ export class AppLog{
     public end(){
         if(this._inited)
         this._baseLogFileStream?.end();
+        this._baseLogFileStream = undefined;
     }
 
 
