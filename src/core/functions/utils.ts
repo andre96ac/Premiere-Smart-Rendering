@@ -31,9 +31,9 @@ export function calcDurationSeconds(frameIn: number, frameOut:number, timeBase: 
 
 export function calcFinalFileName(clip: Clip): string{
 
-    const splitFileName = clip.fileName.split('.');
-    const extension = splitFileName.pop();
-    return `${splitFileName.flat()}-${clip.clipCountForFile}.${extension}`;
+    const parsed = path.parse(clip.fileName);
+
+    return `${parsed.name}-${clip.clipCountForFile}${parsed.ext}`;
 }
 
 
