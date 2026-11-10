@@ -127,6 +127,7 @@ startButton.addEventListener("click", async () => {
     }
 });
 
+concurrencyValue.textContent = concurrencySlider.value;
 concurrencySlider.addEventListener("input", () => {
     concurrencyValue.textContent = concurrencySlider.value;
 });
