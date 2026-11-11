@@ -77,6 +77,7 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
             "-c", "copy",
             "-avoid_negative_ts", "make_zero",
             "-movflags", "+faststart",
+            "-strict", "unofficial",
             finalFileName,
         ];
 

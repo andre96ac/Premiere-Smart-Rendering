@@ -35,3 +35,7 @@ flowchart TD
     F -->|Sì| G["Calcolo intervallo sorgente"]
     F -->|No| H["Avviso con motivazione"]
     G --> I["Elenco delle estrazioni"]
+
+
+
+Loggare tutto ffmpeg su file separato
