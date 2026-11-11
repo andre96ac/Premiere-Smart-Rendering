@@ -113,6 +113,7 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
                 clipFilePath[fileName] = findFilePath(fileName, xmlData);
             }
             const finalUrl = clipFilePath[fileName];
+            const finalTimeBase = getFpsTimebase(el.rate.timebase, el.rate.ntsc)
 
 
             if (
@@ -129,11 +130,11 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
             return {
                 startFrame: el.in, 
                 endframe: el.out, 
-                fpsTimeBase: getFpsTimebase(el.rate.timebase, el.rate.ntsc), 
+                fpsTimeBase: finalTimeBase, 
                 fileName: el.name, 
                 filePath: convertUrlToPath(finalUrl),
-                startSeconds: calcStartSeconds(el.in, el.rate.timebase),
-                durationSeconds: calcDurationSeconds(el.in, el.out, el.rate.timebase),
+                startSeconds: calcStartSeconds(el.in, finalTimeBase),
+                durationSeconds: calcDurationSeconds(el.in, el.out, finalTimeBase),
                 clipCountForFile: clipFileCount[el.name] ?? 1,
                 sequenceName: sequence.sequenceName
             }
