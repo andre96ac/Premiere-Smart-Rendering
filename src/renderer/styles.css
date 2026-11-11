@@ -322,3 +322,27 @@ footer {
 .modal-button:hover {
   filter: brightness(1.12);
 }
+
+
+
+/* XML Drag & Drop */
+
+.xml-drop-zone {
+    padding: 8px;
+    border: 1px dashed #555555;
+    border-radius: var(--border-radius);
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.xml-drop-zone.drag-over {
+    border-color: #2878d0;
+    background-color: rgba(40, 120, 208, 0.12);
+}
+
+.xml-drop-hint {
+    margin-top: 8px;
+    color: #888888;
+    font-size: 12px;
+    text-align: center;
+    pointer-events: none;
+}

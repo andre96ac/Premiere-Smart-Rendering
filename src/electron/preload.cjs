@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils  } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
     getVersion: () => process.versions.electron,
@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
         return () => {
             ipcRenderer.removeListener("render-progress", listener);
         };
-    }
+    },
+
+    getPathForFile: (file) => webUtils.getPathForFile(file),
+
 
 });

@@ -2,6 +2,7 @@ const version = document.getElementById("version");
 
 const xmlPath = document.getElementById("xmlPath");
 const outputPath = document.getElementById("outputPath");
+const xmlDropZone = document.getElementById("xmlDropZone");
 
 const enableLog = document.getElementById("enableLog");
 const overWriteFiles = document.getElementById("overWriteFiles");
@@ -62,14 +63,22 @@ function getFolderPath(filePath) {
   return filePath.replace(/[\\/][^\\/]*$/, "");
 }
 
+
+function applyXmlPath(filePath) {
+    xmlPath.value = filePath;
+    outputPath.value = getFolderPath(filePath);
+
+    status.textContent = "File XML selezionato";
+
+    updateStartButton();
+}
+
 document.getElementById("selectXml").addEventListener("click", async () => {
     try {
         const selectedPath = await window.electronAPI.selectXml();
 
         if (selectedPath) {
-            xmlPath.value = selectedPath;
-            outputPath.value = getFolderPath(selectedPath);
-            status.textContent = "File XML selezionato";
+            applyXmlPath(selectedPath)
         }
 
         updateStartButton();
@@ -77,6 +86,116 @@ document.getElementById("selectXml").addEventListener("click", async () => {
         status.textContent = `Errore: ${error.message}`;
     }
 });
+
+
+//#region drag&drop
+
+let dragCounter = 0;
+
+function containsFiles(event) {
+    return Array.from(event.dataTransfer?.types ?? []).includes("Files");
+}
+
+
+// Impedisce al browser di aprire il file trascinato
+// anche quando viene rilasciato fuori dalla zona XML.
+
+window.addEventListener("dragover", (event) => {
+    if (containsFiles(event)) {
+        event.preventDefault();
+    }
+});
+
+window.addEventListener("drop", (event) => {
+    if (containsFiles(event)) {
+        event.preventDefault();
+    }
+});
+
+
+// Entrata nella zona XML
+
+xmlDropZone.addEventListener("dragenter", (event) => {
+    if (!containsFiles(event)) return;
+
+    event.preventDefault();
+
+    dragCounter++;
+
+    xmlDropZone.classList.add("drag-over");
+});
+
+
+// Movimento sopra la zona XML
+
+xmlDropZone.addEventListener("dragover", (event) => {
+    if (!containsFiles(event)) return;
+
+    event.preventDefault();
+
+    event.dataTransfer.dropEffect = "copy";
+});
+
+
+// Uscita dalla zona XML
+
+xmlDropZone.addEventListener("dragleave", (event) => {
+    if (!containsFiles(event)) return;
+
+    event.preventDefault();
+
+    dragCounter = Math.max(0, dragCounter - 1);
+
+    if (dragCounter === 0) {
+        xmlDropZone.classList.remove("drag-over");
+    }
+});
+
+
+// Rilascio del file
+
+xmlDropZone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    dragCounter = 0;
+
+    xmlDropZone.classList.remove("drag-over");
+
+    const files = Array.from(event.dataTransfer?.files ?? []);
+
+    // Accettiamo un solo file
+    if (files.length !== 1) {
+        status.textContent = "Trascina un solo file XML alla volta.";
+        return;
+    }
+
+    const file = files[0];
+
+    // Controllo estensione
+    if (!file.name.toLowerCase().endsWith(".xml")) {
+        status.textContent = "Il file selezionato non è un XML.";
+        return;
+    }
+
+    try {
+        const filePath = window.electronAPI.getPathForFile(file);
+
+        if (!filePath) {
+            status.textContent = "Impossibile recuperare il percorso del file.";
+            return;
+        }
+
+        // Imposta XML e cartella di destinazione
+        applyXmlPath(filePath);
+
+    } catch (error) {
+        console.error("Errore durante il drag & drop:", error);
+        status.textContent = `Errore durante il caricamento: ${error.message}`;
+    }
+});
+
+//#endregion
 
 document.getElementById("selectOutput").addEventListener("click", async () => {
     try {
