@@ -13,7 +13,6 @@ File identificati tramite ID	Può associare il percorso sbagliato	Alta
 Sequenze nidificate e clip unite	Non segue i riferimenti interni	Alta
 Clip con modifiche alla velocità	Può calcolare un intervallo non corretto	Alta
 Clip e tracce disabilitate	Le elabora comunque	Media
-Frame rate misti o NTSC	Tempi potenzialmente errati	Media
 Campi omessi o ereditati	Può rifiutare clip valide	Media
 Immagini, generatori e solo audio	Ignorati o elaborati impropriamente	Da definire
 
@@ -38,4 +37,3 @@ flowchart TD
 
 
 
-Loggare tutto ffmpeg su file separato

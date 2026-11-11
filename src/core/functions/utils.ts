@@ -172,5 +172,10 @@ export async function runConcurrent<T>(
 
 
 export function getFpsTimebase(timebase: number, ntsc: XmlBoolean): number {
+
+  if(!Number.isFinite(timebase)){
+    throw new Error("Impossibile calcolare la timebase, valore non definito")
+  }
+
   return ntsc === "TRUE"? timebase * 1000 / 1001 : timebase;
 }

@@ -113,13 +113,13 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
                 clipFilePath[fileName] = findFilePath(fileName, xmlData);
             }
             const finalUrl = clipFilePath[fileName];
-            const finalTimeBase = getFpsTimebase(el.rate.timebase, el.rate.ntsc)
+            const finalTimeBase = getFpsTimebase(el.rate?.timebase, el.rate.ntsc)
 
 
             if (
                     el.in === undefined || 
                     el.out === undefined || 
-                    el.rate?.timebase === undefined || 
+                    finalTimeBase === undefined || 
                     el.name === undefined || 
                     finalUrl === undefined ||
                     el.in >= el.out
