@@ -68,8 +68,8 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
         const args = [
             "-hide_banner",
             argOverwrite,
-            "-i", clip.filePath,
             "-ss", String(clip.startSeconds),
+            "-i", clip.filePath,
             "-t", String(clip.durationSeconds),
             "-map", "0:v:0",
             "-map", "0:a?",
