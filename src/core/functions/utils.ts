@@ -71,7 +71,7 @@ export async function existOnFileSystem(path: string): Promise<boolean> {
  * @param baseOutputFolder 
  */
 export async function createSequenceDir(clip: Clip, baseOutputFolder: string): Promise<void>{
-  const pathToCreate = path.join(baseOutputFolder,clip.sequenceName);
+  const pathToCreate = resolveSafeSubfolder(baseOutputFolder, clip.sequenceName);
   const pathAlreadyExistOnFs = await existOnFileSystem(pathToCreate)
   if(!pathAlreadyExistOnFs){
     await mkdir(pathToCreate, { recursive: true });
@@ -171,6 +171,12 @@ export async function runConcurrent<T>(
 }
 
 
+/**
+ * Restituisce il valore corretto di fps della sequenza, a partire dal valore indicato da premiere e dall'indicazione ntsc true/false
+ * @param timebase fps della sequenza
+ * @param ntsc 
+ * @returns 
+ */
 export function getFpsTimebase(timebase: number, ntsc: XmlBoolean): number {
 
   if(!Number.isFinite(timebase)){
@@ -178,4 +184,47 @@ export function getFpsTimebase(timebase: number, ntsc: XmlBoolean): number {
   }
 
   return ntsc === "TRUE"? timebase * 1000 / 1001 : timebase;
+}
+
+
+export function resolveSafeSubfolder(
+    baseFolder: string,
+    folderName: string
+): string {
+
+    if (!folderName || !folderName.trim()) {
+        throw new Error("Nome della sottocartella non valido.");
+    }
+
+    // Rifiuta percorsi assoluti
+    if (path.isAbsolute(folderName)) {
+        throw new Error("Il nome della sottocartella non può essere un percorso assoluto.");
+    }
+
+    // Rifiuta separatori e traversal
+    if (
+        folderName.includes("/") ||
+        folderName.includes("\\") ||
+        folderName === "." ||
+        folderName === ".."
+    ) {
+        throw new Error("Il nome della sottocartella contiene caratteri non consentiti.");
+    }
+
+    const base = path.resolve(baseFolder);
+    const resolved = path.resolve(base, folderName);
+
+    // Verifica che il risultato rimanga dentro la directory base
+    const relative = path.relative(base, resolved);
+
+    if (
+        relative === "" ||
+        relative === ".." ||
+        relative.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relative)
+    ) {
+        throw new Error("Il percorso richiesto non è consentito.");
+    }
+
+    return resolved;
 }

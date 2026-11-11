@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { access } from "node:fs/promises";
 
 import { runCore } from "../../dist/core/runCore.js";
+import { resolveSafeSubfolder } from "../../dist/core/functions/utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -88,7 +89,7 @@ ipcMain.handle("start-rendering", async (event, options) => {
         );
     }
 
-    const finalOutputFolder = options.subFolderName? path.join(options.outputPath, options.subFolderName) : options.outputPath;
+    const finalOutputFolder = options.subFolderName? resolveSafeSubfolder(options.outputPath, options.subFolderName) : path.resolve(options.outputPath);
 
     const config = {
         premiereXmlPath: options.xmlPath,
