@@ -56,13 +56,21 @@ export function calcFinalFilePathName(outputFolder: string, clip: Clip, includeS
  * @param path percorso file incluso nome
  * @returns 
  */
-export async function existOnFileSystem(path: string): Promise<boolean> {
-  try {
-    await access(path, constants.F_OK);
-    return true;
-  } catch {
-    return false;
-  }
+export async function existOnFileSystem(filePath: string): Promise<boolean> {
+    try {
+        await access(filePath, constants.F_OK);
+        return true;
+    } catch (error) {
+        if (
+            error instanceof Error &&
+            "code" in error &&
+            error.code === "ENOENT"
+        ) {
+            return false;
+        }
+
+        throw error;
+    }
 }
 
 /**
