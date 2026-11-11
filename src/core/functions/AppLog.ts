@@ -32,8 +32,10 @@ export class AppLog{
     }
 
     private _baseLogFileName: string = 'premiere-smart-rendering.log'
-
     private _baseLogFileStream: WriteStream | undefined;
+
+    private _ffmpegLogFileName: string = 'ffmpeg.log'
+    private _ffmpegLogFileStream: WriteStream | undefined;
 
     private _enableLogging: boolean = true;
 
@@ -47,15 +49,14 @@ export class AppLog{
     }
 
 
-    private _logOnFile(msg: string | Object, type: LogType){
-        const finalMsg = typeof(msg) == 'object'? JSON.stringify(msg) : msg;
+    private _logOnMainFile(msg: string | Object, type: LogType, err?: Error){
+        const finalMsg = (typeof(msg) == 'object'? JSON.stringify(msg) : msg) + (!!err? ` - ${err.message}` : ``)
         if(this._inited){
-            this._baseLogFileStream?.write(`${this._getMsgPrefix(type)}${finalMsg}`);
-            this._baseLogFileStream?.write('\n')
+            this._baseLogFileStream?.write(`${this._getMsgPrefix(type)}${finalMsg}\n`);
         }
 
     }
-
+    
     private _logOnConsole(msg: string | Object, type: LogType, e?: Error){
         const finalMsg = `${this._getMsgPrefix(type)}${msg}`
         switch(type){
@@ -68,11 +69,21 @@ export class AppLog{
             case LogType.log:
                 console.log(finalMsg);
                 break;
-            case LogType.warn:
-                console.warn(finalMsg);
-                break;
+                case LogType.warn:
+                    console.warn(finalMsg);
+                    break;
+                }
+            }
+            
+            
+    private _logOnFfmpegFile(msg: string | Object, type: LogType){
+        const finalMsg = typeof(msg) == 'object'? JSON.stringify(msg) : msg;
+        if(this._inited){
+            this._ffmpegLogFileStream?.write(`${this._getMsgPrefix(type)}${finalMsg}\n`);
         }
+
     }
+
 
     //#endregion
 
@@ -89,26 +100,29 @@ export class AppLog{
             this._baseLogFileStream = createWriteStream(path.join(
                         this._logFolder,
                         this._baseLogFileName
-                    ), {flags: 'a'});
+                    ), {flags: 'a'}
+            );
+            this._ffmpegLogFileStream = createWriteStream(path.join(
+                        this._logFolder,
+                        this._ffmpegLogFileName
+                    ), {flags: 'a'}
+            );
         }
         this._enableLogging = enableLog;
 
     }
 
-    public end(): Promise<void>{
+    public end(): Promise<PromiseSettledResult<void>[] | []>{
 
         
-        const stream = this._baseLogFileStream;
+        const baseFileStream = this._baseLogFileStream;
+        const ffmpegFileStream = this._ffmpegLogFileStream;
 
         if(this._inited){
 
-            return  new Promise((res, rej) => {
-                
-                this._baseLogFileStream = undefined;
-    
-    
-    
-                stream?.end((err: Error | null) => {
+            const promiseBaseFileClose: Promise<void> = new Promise((res, rej) => {
+                this._baseLogFileStream = undefined; 
+                baseFileStream?.end((err: Error | null) => {
                     if(!!err){
                         rej(err)
                     }
@@ -117,9 +131,23 @@ export class AppLog{
                     }
                 });
             })
+            const promiseFfmpegFileClose: Promise<void> = new Promise((res, rej) => {
+                this._ffmpegLogFileStream = undefined; 
+                ffmpegFileStream?.end((err: Error | null) => {
+                    if(!!err){
+                        rej(err)
+                    }
+                    else{
+                        res();
+                    }
+                });
+            })
+
+
+            return Promise.allSettled([promiseBaseFileClose, promiseFfmpegFileClose])
         }
         else {
-            return Promise.resolve();
+            return Promise.resolve([]);
         } 
 
     }
@@ -128,21 +156,21 @@ export class AppLog{
     public log(msg:string | Object){
         if(this._enableLogging){
             this._logOnConsole(msg, LogType.log)
-            this._logOnFile(msg, LogType.log)
+            this._logOnMainFile(msg, LogType.log)
         }
         
     }
     public warn(msg:string | Object){
         if(this._enableLogging){
             this._logOnConsole(msg, LogType.warn)
-            this._logOnFile(msg, LogType.warn)
+            this._logOnMainFile(msg, LogType.warn)
         }
         
     }
     public err(msg:string | Object, error?: Error){
         if(this._enableLogging){
             this._logOnConsole(msg, LogType.err, error)
-            this._logOnFile(msg, LogType.err)
+            this._logOnMainFile(msg, LogType.err, error)
         }
 
     }
@@ -174,6 +202,13 @@ export class AppLog{
         let finalJson: string = typeof(myData) == 'object'? JSON.stringify(myData) : myData;
         await writeFile(logPath, finalJson);
      
+    }
+
+
+    public appendDataOnFfmpegLog(msg: string, type: LogType = LogType.log){
+        if(this._enableLogging){
+            this._logOnFfmpegFile(msg, type)
+        }
     }
 
 

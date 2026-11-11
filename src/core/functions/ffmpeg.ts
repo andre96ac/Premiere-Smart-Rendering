@@ -3,44 +3,139 @@ import { spawn } from "node:child_process";
 import type { AppConfig, Clip, FfmpegResult } from "../types/types.js";
 import { calcFinalFileName, calcFinalFilePathName, createSequenceDir, existOnFileSystem, runConcurrent } from "./utils.js";
 import { AppLog } from "./AppLog.js";
+import { createInterface } from "node:readline";
+import type { Readable } from "node:stream";
+
+
+// function _runFfmpegSingle(args: string[], ffmpegPath = "ffmpeg"): Promise<FfmpegResult> {
+//   return new Promise((resolve, reject) => {
+//     const process = spawn(ffmpegPath, args, {
+//       windowsHide: true,
+//       stdio: ["ignore", "ignore", "pipe"],
+//     });
+
+//     let stderr = "";
+
+//     process.stderr.setEncoding("utf8");
+//     process.stderr.on("data", (chunk: string) => {
+//       stderr += chunk;
+//     });
+
+//     process.on("error", (error) => {
+//       reject(error);
+//     });
+
+//     process.on("close", (code) => {
+//       if (code === 0) {
+//         resolve({
+//           exitCode: 0,
+//           stderr,
+//         });
+//       } else {
+//         reject(
+//           new Error(
+//             `FFmpeg terminato con codice ${code}.\n${stderr}`
+//           )
+//         );
+//       }
+//     });
+//   });
+// }
+
 
 
 function _runFfmpegSingle(
-  args: string[],
-  ffmpegPath = "ffmpeg"
+    args: string[],
+    ffmpegPath = "ffmpeg",
+    logLabel = "clip"
 ): Promise<FfmpegResult> {
-  return new Promise((resolve, reject) => {
-    const process = spawn(ffmpegPath, args, {
-      windowsHide: true,
-      stdio: ["ignore", "ignore", "pipe"],
-    });
 
-    let stderr = "";
+    return new Promise((resolve, reject) => {
 
-    process.stderr.setEncoding("utf8");
-    process.stderr.on("data", (chunk: string) => {
-      stderr += chunk;
-    });
-
-    process.on("error", (error) => {
-      reject(error);
-    });
-
-    process.on("close", (code) => {
-      if (code === 0) {
-        resolve({
-          exitCode: 0,
-          stderr,
+        const child = spawn(ffmpegPath, args, {
+            windowsHide: true,
+            stdio: ["ignore", "pipe", "pipe"],
         });
-      } else {
-        reject(
-          new Error(
-            `FFmpeg terminato con codice ${code}.\n${stderr}`
-          )
-        );
-      }
+
+        let spawnError: Error | undefined;
+
+
+        // Collega uno stream di FFmpeg al file di log
+        const attachOutputLogger = (
+            stream: Readable | null,
+            streamName: string
+        ) => {
+
+            if (!stream) return;
+
+            stream.setEncoding("utf8");
+
+            const reader = createInterface({
+                input: stream,
+                crlfDelay: Infinity
+            });
+
+            reader.on("line", (line: string) => {
+
+                AppLog.instance.appendDataOnFfmpegLog(
+                    `[${logLabel}] [${streamName}] ${line}`
+                );
+
+            });
+
+        };
+
+
+        // Intercettiamo entrambi gli stream
+        attachOutputLogger(child.stdout, "stdout");
+        attachOutputLogger(child.stderr, "stderr");
+
+
+        // Errore durante l'avvio del processo
+        child.on("error", (error) => {
+
+            spawnError = error;
+
+            AppLog.instance.appendDataOnFfmpegLog(
+                `[${logLabel}] [SPAWN ERROR] ${error.stack ?? error.message}`
+            );
+
+            reject(error);
+
+        });
+
+
+        // Chiusura del processo
+        child.on("close", (code, signal) => {
+
+            AppLog.instance.appendDataOnFfmpegLog(
+                `[${logLabel}] [PROCESS END] exitCode=${code}, signal=${signal ?? "none"}`
+            );
+
+            if (spawnError) return;
+
+            if (code === 0) {
+
+                resolve({
+                    exitCode: 0,
+                    stderr: ""
+                });
+
+            } else {
+
+                reject(
+                    new Error(
+                        `FFmpeg terminato con codice ${code}. ` +
+                        `Consultare il log FFmpeg per i dettagli`
+                    )
+                );
+
+            }
+
+        });
+
     });
-  });
+
 }
 
 
