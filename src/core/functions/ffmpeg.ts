@@ -46,8 +46,8 @@ import type { Readable } from "node:stream";
 
 function _runFfmpegSingle(
     args: string[],
-    ffmpegPath = "ffmpeg",
-    logLabel = "clip"
+    ffmpegPath: string,
+    logLabel:string
 ): Promise<FfmpegResult> {
 
     return new Promise((resolve, reject) => {
@@ -126,7 +126,7 @@ function _runFfmpegSingle(
                 reject(
                     new Error(
                         `FFmpeg terminato con codice ${code}. ` +
-                        `Consultare il log FFmpeg per i dettagli`
+                        `Consultare il log FFmpeg per i dettagli: ${logLabel}`
                     )
                 );
 
@@ -178,13 +178,13 @@ export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: stri
 
         const fileExist = await(existOnFileSystem(finalFileName));
         if(!fileExist){
-            return _runFfmpegSingle(args, ffmpegPath)
+            return _runFfmpegSingle(args, ffmpegPath, finalFileName)
         }
         else{
             if(overwrite){
 
                 AppLog.instance.warn(`File "${finalFileName}" già presente... VERRA' SOVRASCRITTO`);
-                return _runFfmpegSingle(args, ffmpegPath)
+                return _runFfmpegSingle(args, ffmpegPath, finalFileName)
             }
             else{
 
