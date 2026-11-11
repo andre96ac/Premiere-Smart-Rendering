@@ -224,7 +224,7 @@ export async function runFfmpeg(clips: Clip[], config: AppConfig, onProgress?: (
 
           try{
             await runFfmpegSingle(config.ffmpegExePath, config.outputFolder, clip, config.overWriteFiles, config.separateSequences);
-            AppLog.instance.log(`${completed+1} di ${total} - Clip "${calcFinalFileName(clip)} Elaborata correttaente!"`);
+            AppLog.instance.log(`${completed+1} di ${total} - Clip "${calcFinalFileName(clip)}" Elaborata correttamente!`);
           }
           catch(error){
             AppLog.instance.err(`${completed+1} di ${total} - Errore durante il taglio della clip "${calcFinalFileName(clip)}"`,error instanceof Error ? error : new Error(String(error)));

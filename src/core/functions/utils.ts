@@ -111,15 +111,15 @@ export async function saveJson (myJson: object | string, logFolder: string, file
 
 /**
  * Trova il percorso del file, pescandolo dall'array clip dell'xmlpremierefile, anzichè dall'array di sequences (usata se nell'array di sequence il percorso non compare per motivi da verificare) 
- * @param fileName nome file da cercare
+ * @param masterclipId nome file da cercare
  * @param xmlData xml di premiere
  */
-export function findFilePath(fileName: string, xmlData: XmlPremiereFile): string{
+export function findFilePath(masterclipId: string, xmlData: XmlPremiereFile, fileName:string): string{
   
-  const objClip = xmlData.xmeml.project.children.clip.find(el => el.name == fileName);
+  const objClip = xmlData.xmeml.project.children.clip.find(el => el.masterclipid == masterclipId);
   const filePath = objClip?.media.video.track.clipitem.file.pathurl;
   if(!filePath){
-    throw new Error(`ERRORE - PERCORSO FILE ${fileName} NON TROVATO NELL'XML`);
+    throw new Error(`ERRORE - PERCORSO FILE ${fileName} - ${masterclipId} NON TROVATO NELL'XML`);
   }
   return filePath;
 }

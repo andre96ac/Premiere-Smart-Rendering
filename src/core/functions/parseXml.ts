@@ -90,29 +90,29 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
     clipItemsSequence.forEach(sequence => {  
 
         const partialResult: Clip[] = sequence.clipItems.map(el => {
-            const fileName = el.name;
+            const masterClipId = el.masterclipid;
 
 
             // controllo se il file è già presente in clipFileCount, se lo è aumento il contatore, altrimenti lo inserisco
-            if(clipFileCount[fileName] !== undefined){
-                clipFileCount[fileName]++;
+            if(clipFileCount[masterClipId] !== undefined){
+                clipFileCount[masterClipId]++;
             }
             else{
-                clipFileCount[fileName] = 1;
+                clipFileCount[masterClipId] = 1;
             }
 
 
             //recupero il fileUrl dalla clip e lo salvo nel registro, oppure vado a recuperarlo dal registro
             const tempFileUrl = el.file?.pathurl;
-            if(!!tempFileUrl && !clipFilePath[fileName]){
-                clipFilePath[fileName] = tempFileUrl;
+            if(!!tempFileUrl && !clipFilePath[masterClipId]){
+                clipFilePath[masterClipId] = tempFileUrl;
             }
             //Il file non è ne in children>sequence>clip, ne nel registro, forse è nell'oggetto children>clip>
-            else if(!tempFileUrl && !clipFilePath[fileName]){
+            else if(!tempFileUrl && !clipFilePath[masterClipId]){
                 //gestiamo il caso in cui il fileurl non è contenuto nell'oggetto sequence, ma solo nell'oggetto clip. (e non è nel registro)
-                clipFilePath[fileName] = findFilePath(fileName, xmlData);
+                clipFilePath[masterClipId] = findFilePath(masterClipId, xmlData, el.name);
             }
-            const finalUrl = clipFilePath[fileName];
+            const finalUrl = clipFilePath[masterClipId];
             const finalTimeBase = getFpsTimebase(el.rate?.timebase, el.rate.ntsc)
 
 
@@ -135,7 +135,7 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
                 filePath: convertUrlToPath(finalUrl),
                 startSeconds: calcStartSeconds(el.in, finalTimeBase),
                 durationSeconds: calcDurationSeconds(el.in, el.out, finalTimeBase),
-                clipCountForFile: clipFileCount[el.name] ?? 1,
+                clipCountForFile: clipFileCount[masterClipId] ?? 1,
                 sequenceName: sequence.sequenceName
             }
         })
