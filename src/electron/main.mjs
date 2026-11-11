@@ -24,7 +24,7 @@ function createWindow() {
         height: 700,
         useContentSize: true,
         title: "Premiere Smart Rendering",
-        icon: path.join(app.getAppPath(), "resources", "appIcon.ico"),
+        icon: path.join(app.getAppPath(), "resources", "icon.ico"),
 
         webPreferences: {
             preload: path.join(__dirname, "preload.cjs"),
