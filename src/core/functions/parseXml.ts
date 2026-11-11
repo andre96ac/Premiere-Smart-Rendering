@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 import type { Sequence, SequenceClipItem, VideoTrack, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { convertUrlToPath } from "./convertUrlToPath.js";
-import { calcDurationSeconds, calcStartSeconds, findFilePath } from "./utils.js";
+import { calcDurationSeconds, calcStartSeconds, findFilePath, getFpsTimebase } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -129,7 +129,7 @@ export function parseXml(xmlData: XmlPremiereFile): Clip[]{
             return {
                 startFrame: el.in, 
                 endframe: el.out, 
-                fpsTimeBase: el.rate.timebase, 
+                fpsTimeBase: getFpsTimebase(el.rate.timebase, el.rate.ntsc), 
                 fileName: el.name, 
                 filePath: convertUrlToPath(finalUrl),
                 startSeconds: calcStartSeconds(el.in, el.rate.timebase),

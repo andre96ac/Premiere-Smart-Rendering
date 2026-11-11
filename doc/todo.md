@@ -1,25 +1,37 @@
- 3. I calcoli dei tempi non gestiscono NTSC
-Alta priorità
-
-src/core/functions/utils.ts · righe 14–28
-
-Attualmente calcoli il tempo dividendo il numero di frame per timebase:
-return frameIn / timeBase;
 
 
-Ma nel formato XML utilizzato da Premiere, timebase: 30 e ntsc: TRUE indicano una frequenza effettiva di circa 29,97 fps, non 30. Questo è confermato dalla documentazione del formato XMEML di Apple. 
-developer.apple.com
-
-Esempio: 108.000 frame a 29,97 fps
-Calcolo attuale
-3.600 s
-
-Tempo corretto
-3.603,6 s
 
 
-3,6 secondi di differenza
 
-Il problema cresce con l'avanzare della registrazione e può causare tagli in punti sbagliati.
 
-Correzione: utilizzare anche rate.ntsc, con il fattore 1000/1001 quando è attivo, e verificare i risultati con file di prova a 23,976, 29,97 e 59,94 fps.
+
+
+Caso	Comportamento del parser attuale	Priorità
+XML contenente direttamente una sequenza	Rifiuta l'XML	Alta
+Sequenze all'interno di cartelle (bin)	Non le trova	Alta
+File identificati tramite ID	Può associare il percorso sbagliato	Alta
+Sequenze nidificate e clip unite	Non segue i riferimenti interni	Alta
+Clip con modifiche alla velocità	Può calcolare un intervallo non corretto	Alta
+Clip e tracce disabilitate	Le elabora comunque	Media
+Frame rate misti o NTSC	Tempi potenzialmente errati	Media
+Campi omessi o ereditati	Può rifiutare clip valide	Media
+Immagini, generatori e solo audio	Ignorati o elaborati impropriamente	Da definire
+
+
+
+
+
+https://chatgpt.com/share/6af36eac-82a8-83ed-a3b7-c8aafeb5d93d
+
+
+
+
+flowchart TD
+    A["XML Premiere"] --> B["Normalizzazione della struttura"]
+    B --> C["Registro dei file e degli ID"]
+    C --> D["Ricerca ricorsiva delle sequenze"]
+    D --> E["Analisi delle clip"]
+    E --> F{"Clip supportata?"}
+    F -->|Sì| G["Calcolo intervallo sorgente"]
+    F -->|No| H["Avviso con motivazione"]
+    G --> I["Elenco delle estrazioni"]

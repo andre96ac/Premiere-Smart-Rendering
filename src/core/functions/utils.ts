@@ -1,7 +1,7 @@
 import { access, constants, mkdir, writeFile } from "fs/promises";
 import type { Clip } from "../types/types.js";
 import path from "path";
-import type { XmlPremiereFile } from "../types/xmlPremiereFile.js";
+import type { XmlBoolean, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -168,4 +168,9 @@ export async function runConcurrent<T>(
     );
 
     await Promise.all(workers);
+}
+
+
+export function getFpsTimebase(timebase: number, ntsc: XmlBoolean): number {
+  return ntsc === "TRUE"? timebase * 1000 / 1001 : timebase;
 }
