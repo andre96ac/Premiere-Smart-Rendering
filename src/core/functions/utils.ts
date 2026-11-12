@@ -1,7 +1,8 @@
 import { access, constants, mkdir, writeFile } from "fs/promises";
-import type { Clip } from "../types/types.js";
 import path from "path";
-import type { XmlBoolean, XmlPremiereFile } from "../types/xmlPremiereFile.js";
+
+import type { Clip } from "../types/types.js";
+import type { MasterClip, Sequence, XmlBoolean, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -235,4 +236,33 @@ export function resolveSafeSubfolder(
     }
 
     return resolved;
+}
+
+
+/**
+ * Recupera tutte le sequenze dal progetto scavando ricorsivamente dentro le voci bin
+ * @param xmlData 
+ * @returns 
+ */
+export function getAllSequencesInProject(xmlData: XmlPremiereFile): Sequence[]{
+
+    const finalSequences: Sequence[] = [];
+    //TODO
+
+    return finalSequences;
+    
+}
+
+
+/**
+ * Recupera tutte le sequenze dal progetto scavando ricorsivamente dentro le voci bin
+ * @param xmlData 
+ * @returns 
+*/
+export function getAllClipsInProject(xmlData: XmlPremiereFile): MasterClip[]{
+    
+    const finalClips: MasterClip[] = [];
+    //TODO
+    return finalClips;
+
 }

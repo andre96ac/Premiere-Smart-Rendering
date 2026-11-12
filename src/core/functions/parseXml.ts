@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 import type { Sequence, SequenceClipItem, VideoTrack, XmlPremiereFile } from "../types/xmlPremiereFile.js";
 import { convertUrlToPath } from "./convertUrlToPath.js";
-import { calcDurationSeconds, calcStartSeconds, findFilePath, getFpsTimebase } from "./utils.js";
+import { calcDurationSeconds, calcStartSeconds, findFilePath, getAllClipsInProject, getAllSequencesInProject, getFpsTimebase } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 
 
@@ -39,6 +39,8 @@ export async function loadXml(path: string): Promise<XmlPremiereFile>{
 }
 
 export function parseXml(xmlData: XmlPremiereFile): Clip[]{
+
+    //TODO Modifica funzione per usare getAllClipsInProject e getAllSequencesInProject per recuperare tutte le sequenze e le clip annidate nelle sottocartelle bin
 
 
     //oggetto che mi conta quante clip ci sono per ogni file con nome uguale
