@@ -5,13 +5,15 @@ export type Clip = {
     fileName: string, 
     filePath: string,
     startSeconds: number,
+    endSeconds: number,
     durationSeconds: number,
     clipCountForFile: number,
-    sequenceName: string
+    sequenceName: string,
+
 }
 
 
-export type FfmpegResult = {
+export type CutResult = {
   exitCode: number;
   stderr: string;
 };
@@ -24,8 +26,10 @@ export type AppConfig = {
   premiereXmlPath: string,
   outputFolder: string,
   ffmpegExePath: string,
+  mp4BoxExePath: string,
   logFilesPath: string,
-  maxConcurrencyProcesses: number
+  maxConcurrencyProcesses: number,
+  engine: Engine
 }
 
 export const appConfigStructure: {booleanFields: string[], stringFields: string[], numberFields: string[]} = {
@@ -38,9 +42,23 @@ export const appConfigStructure: {booleanFields: string[], stringFields: string[
       "premiereXmlPath",
       "outputFolder",
       "ffmpegExePath",
-      "logFilesPath"
+      "logFilesPath",
+      "engine",
+      "mp4BoxExePath"
   ],
   numberFields: [
     "maxConcurrencyProcesses"
   ]
 } as const;
+
+export enum Engine{
+  MP4BOX = "mp4box",
+  FFMPEG = "ffmpeg",
+}
+
+
+export enum LogType{
+    err = 'ERROR',
+    log = 'DEBUG',
+    warn = "WARNING"
+}

@@ -1,15 +1,12 @@
 import { createWriteStream, WriteStream } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { Engine } from "../types/types.js";
+import { LogType } from "../types/types.js";
 
 
 // type LogType = 'err' | 'log' | 'warn';
 
-enum LogType{
-    err = 'ERROR',
-    log = 'DEBUG',
-    warn = "WARNING"
-}
 
 
 export class AppLog{
@@ -34,8 +31,8 @@ export class AppLog{
     private _baseLogFileName: string = 'premiere-smart-rendering.log'
     private _baseLogFileStream: WriteStream | undefined;
 
-    private _ffmpegLogFileName: string = 'ffmpeg.log'
-    private _ffmpegLogFileStream: WriteStream | undefined;
+    private _MainProcessLogFileName: string | undefined;
+    private _mainProcessLogFileStream: WriteStream | undefined;
 
     private _enableLogging: boolean = true;
 
@@ -76,10 +73,10 @@ export class AppLog{
             }
             
             
-    private _logOnFfmpegFile(msg: string | Object, type: LogType){
+    private _logOnMainProcessFile(msg: string | Object, type: LogType){
         const finalMsg = typeof(msg) == 'object'? JSON.stringify(msg) : msg;
         if(this._inited){
-            this._ffmpegLogFileStream?.write(`${this._getMsgPrefix(type)}${finalMsg}\n`);
+            this._mainProcessLogFileStream?.write(`${this._getMsgPrefix(type)}${finalMsg}\n`);
         }
 
     }
@@ -92,9 +89,10 @@ export class AppLog{
 
     //#region PUBLIC
 
-    public async init(logFolder: string, enableLog: boolean){
+    public async init(logFolder: string, enableLog: boolean, engine: Engine){
 
         this._logFolder = logFolder;
+        this._MainProcessLogFileName = `${engine}.log`
         if(!!this._logFolder && this._logFolder.length > 0){
             await mkdir(logFolder, {recursive: true})
             this._baseLogFileStream = createWriteStream(path.join(
@@ -102,9 +100,9 @@ export class AppLog{
                         this._baseLogFileName
                     ), {flags: 'a'}
             );
-            this._ffmpegLogFileStream = createWriteStream(path.join(
+            this._mainProcessLogFileStream = createWriteStream(path.join(
                         this._logFolder,
-                        this._ffmpegLogFileName
+                        this._MainProcessLogFileName
                     ), {flags: 'a'}
             );
         }
@@ -116,7 +114,7 @@ export class AppLog{
 
         
         const baseFileStream = this._baseLogFileStream;
-        const ffmpegFileStream = this._ffmpegLogFileStream;
+        const mainProcessLogFileStream = this._mainProcessLogFileStream;
 
         if(this._inited){
 
@@ -132,8 +130,8 @@ export class AppLog{
                 });
             })
             const promiseFfmpegFileClose: Promise<void> = new Promise((res, rej) => {
-                this._ffmpegLogFileStream = undefined; 
-                ffmpegFileStream?.end((err: Error | null) => {
+                this._mainProcessLogFileStream = undefined; 
+                mainProcessLogFileStream?.end((err: Error | null) => {
                     if(!!err){
                         rej(err)
                     }
@@ -205,9 +203,9 @@ export class AppLog{
     }
 
 
-    public appendDataOnFfmpegLog(msg: string, type: LogType = LogType.log){
+    public appendDataOnMainProcessLog(msg: string, type: LogType){
         if(this._enableLogging){
-            this._logOnFfmpegFile(msg, type)
+            this._logOnMainProcessFile(msg, type)
         }
     }
 

@@ -21,5 +21,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
     getPathForFile: (file) => webUtils.getPathForFile(file),
 
+    getEngines: () => ipcRenderer.invoke("get-engines"),
+
 
 });

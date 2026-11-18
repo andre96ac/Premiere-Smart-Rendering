@@ -41,6 +41,11 @@
         "filter": [
           "ffmpeg.exe"
         ]
+      },
+      {
+        "from": "resources/mp4box",
+        "to": "mp4box"
+        
       }
     ],
     "win": {

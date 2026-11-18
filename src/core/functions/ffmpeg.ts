@@ -1,46 +1,10 @@
 
 import { spawn } from "node:child_process";
-import type { AppConfig, Clip, FfmpegResult } from "../types/types.js";
+import { LogType, type AppConfig, type Clip, type CutResult } from "../types/types.js";
 import { calcFinalFileName, calcFinalFilePathName, createSequenceDir, existOnFileSystem, runConcurrent } from "./utils.js";
 import { AppLog } from "./AppLog.js";
 import { createInterface } from "node:readline";
 import type { Readable } from "node:stream";
-
-
-// function _runFfmpegSingle(args: string[], ffmpegPath = "ffmpeg"): Promise<FfmpegResult> {
-//   return new Promise((resolve, reject) => {
-//     const process = spawn(ffmpegPath, args, {
-//       windowsHide: true,
-//       stdio: ["ignore", "ignore", "pipe"],
-//     });
-
-//     let stderr = "";
-
-//     process.stderr.setEncoding("utf8");
-//     process.stderr.on("data", (chunk: string) => {
-//       stderr += chunk;
-//     });
-
-//     process.on("error", (error) => {
-//       reject(error);
-//     });
-
-//     process.on("close", (code) => {
-//       if (code === 0) {
-//         resolve({
-//           exitCode: 0,
-//           stderr,
-//         });
-//       } else {
-//         reject(
-//           new Error(
-//             `FFmpeg terminato con codice ${code}.\n${stderr}`
-//           )
-//         );
-//       }
-//     });
-//   });
-// }
 
 
 
@@ -48,7 +12,7 @@ function _runFfmpegSingle(
     args: string[],
     ffmpegPath: string,
     logLabel:string
-): Promise<FfmpegResult> {
+): Promise<CutResult> {
 
     return new Promise((resolve, reject) => {
 
@@ -77,8 +41,8 @@ function _runFfmpegSingle(
 
             reader.on("line", (line: string) => {
 
-                AppLog.instance.appendDataOnFfmpegLog(
-                    `[${logLabel}] [${streamName}] ${line}`
+                AppLog.instance.appendDataOnMainProcessLog(
+                    `[${logLabel}] [${streamName}] ${line}`, LogType.log
                 );
 
             });
@@ -96,8 +60,8 @@ function _runFfmpegSingle(
 
             spawnError = error;
 
-            AppLog.instance.appendDataOnFfmpegLog(
-                `[${logLabel}] [SPAWN ERROR] ${error.stack ?? error.message}`
+            AppLog.instance.appendDataOnMainProcessLog(
+                `[${logLabel}] [SPAWN ERROR] ${error.stack ?? error.message}`, LogType.err
             );
 
             reject(error);
@@ -108,8 +72,8 @@ function _runFfmpegSingle(
         // Chiusura del processo
         child.on("close", (code, signal) => {
 
-            AppLog.instance.appendDataOnFfmpegLog(
-                `[${logLabel}] [PROCESS END] exitCode=${code}, signal=${signal ?? "none"}`
+            AppLog.instance.appendDataOnMainProcessLog(
+                `[${logLabel}] [PROCESS END] exitCode=${code}, signal=${signal ?? "none"}`, LogType.log
             );
 
             if (spawnError) return;
@@ -148,7 +112,7 @@ function _runFfmpegSingle(
  * @param separateSequences specifica se salvare i file in sottocartelle diverse per ogni sequenza
  * @returns 
  */
-export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: string, clip: Clip, overwrite: boolean = true, separateSequences: boolean): Promise<FfmpegResult>{
+export async function runFfmpegSingle(ffmpegPath: string, baseOutputFolder: string, clip: Clip, overwrite: boolean = true, separateSequences: boolean): Promise<CutResult>{
 
 
 

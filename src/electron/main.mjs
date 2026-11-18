@@ -12,12 +12,14 @@ import { access } from "node:fs/promises";
 
 import { runCore } from "../../dist/core/runCore.js";
 import { resolveSafeSubfolder } from "../../dist/core/functions/utils.js";
+import { Engine } from "../../dist/core/types/types.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 //abilita o disabilita il menù per debug.
-const enableMenu = false;
+const enableMenu = true;
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -77,6 +79,11 @@ ipcMain.handle("start-rendering", async (event, options) => {
         throw new Error("Le opzioni di rendering non sono valide.");
     }
 
+
+    if (!Object.values(Engine).includes(options.engine)) {
+        throw new Error("Motore di rendering non valido.");
+    }
+
     const ffmpegExePath = app.isPackaged
         ? path.join(process.resourcesPath, "ffmpeg", "ffmpeg.exe")
         : path.join(app.getAppPath(), "resources", "ffmpeg", "ffmpeg.exe");
@@ -89,6 +96,18 @@ ipcMain.handle("start-rendering", async (event, options) => {
         );
     }
 
+    const mp4BoxExePath = app.isPackaged
+        ? path.join(process.resourcesPath, "mp4box", "mp4box.exe")
+        : path.join(app.getAppPath(), "resources", "mp4box", "mp4box.exe");
+
+    try {
+        await access(mp4BoxExePath);
+    } catch {
+        throw new Error(
+            `MP4Box non trovato. Percorso previsto: ${mp4BoxExePath}`
+        );
+    }
+
     const finalOutputFolder = options.subFolderName? resolveSafeSubfolder(options.outputPath, options.subFolderName) : path.resolve(options.outputPath);
 
     const config = {
@@ -98,11 +117,13 @@ ipcMain.handle("start-rendering", async (event, options) => {
         overWriteFiles: options.overWriteFiles,
         separateSequences: options.separateSequences,
         ffmpegExePath,
+        mp4BoxExePath,
         logFilesPath: path.join(
             finalOutputFolder,
             "premiere-smart-rendering-log"
         ),
-        maxConcurrencyProcesses: options.maxConcurrencyProcesses
+        maxConcurrencyProcesses: options.maxConcurrencyProcesses,
+        engine: options.engine
     };
 
 
@@ -120,6 +141,10 @@ ipcMain.handle("start-rendering", async (event, options) => {
     }); 
 
     return { success: true };
+});
+
+ipcMain.handle("get-engines", () => {
+  return Object.values(Engine);
 });
 
 

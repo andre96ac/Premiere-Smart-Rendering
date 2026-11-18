@@ -27,6 +27,9 @@ const confirmWarning = document.getElementById("confirmWarning");
 const startButton = document.getElementById("startRendering");
 const status = document.getElementById("status");
 
+const engineSelect = document.getElementById("engine");
+
+
 version.textContent = `Electron ${window.electronAPI.getVersion()}`;
 
 
@@ -71,6 +74,19 @@ function applyXmlPath(filePath) {
     status.textContent = "File XML selezionato";
 
     updateStartButton();
+}
+
+async function loadEngines() {
+  const engines = await window.electronAPI.getEngines();
+
+  engineSelect.replaceChildren();
+
+  for (const engine of engines) {
+    const option = document.createElement("option");
+    option.value = engine;
+    option.textContent = engine.toUpperCase();
+    engineSelect.appendChild(option);
+  }
 }
 
 document.getElementById("selectXml").addEventListener("click", async () => {
@@ -220,7 +236,8 @@ startButton.addEventListener("click", async () => {
         overWriteFiles: overWriteFiles.checked,
         separateSequences: separateSequences.checked,
         maxConcurrencyProcesses: Number(concurrencySlider.value),
-        subFolderName: createSubfolderCheckbox.checked? subfolderNameInput.value.trim() : ""
+        subFolderName: createSubfolderCheckbox.checked? subfolderNameInput.value.trim() : "",
+        engine: engineSelect.value
     };
 
     startButton.disabled = true;
@@ -292,3 +309,6 @@ const resizeObserver = new ResizeObserver(() => {
 });
 
 resizeObserver.observe(container);
+
+
+loadEngines();

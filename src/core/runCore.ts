@@ -1,18 +1,20 @@
 import { AppLog } from "./functions/AppLog.js";
 import { runFfmpeg } from "./functions/ffmpeg.js";
 import { loadXml, parseXml } from "./functions/parseXml.js";
-import type { AppConfig } from "./types/types.js";
+import type { AppConfig, Clip } from "./types/types.js";
 
 import pkg from '../../package.json' with { type: 'json' };
 import { validateConfig } from "./functions/appConfig.js";
 import { createMainProgectDir } from "./functions/utils.js";
+import { callEngine } from "./functions/callEngine.js";
+
 
 
 export async function runCore(config: AppConfig, onProgress?: (completed: number, total: number) => void) {
 
     try{
 
-        await AppLog.instance.init(config.logFilesPath, config.enableLog);
+        await AppLog.instance.init(config.logFilesPath, config.enableLog, config.engine);
     
         AppLog.instance.log(`###### PREMIERE SMART RENDERING V.${pkg.version} BY ${pkg.author} ######`)
         AppLog.instance.log(`Avvio taglio progetto "${config.premiereXmlPath}"...`)
@@ -30,7 +32,7 @@ export async function runCore(config: AppConfig, onProgress?: (completed: number
 
         await createMainProgectDir(config.outputFolder);
         
-        await runFfmpeg(clips, config, onProgress);
+        await callEngine(clips, config, onProgress);
     
         AppLog.instance.log(`Taglio progetto "${config.premiereXmlPath}" terminato`)
     

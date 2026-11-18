@@ -8,12 +8,12 @@ import { AppLog } from "./AppLog.js";
 
 /**
  * converte il frame di taglio iniziale indicato sulla clip in una durata in secondi
- * @param frameIn frame
+ * @param frame frame
  * @param timeBase base temporale della sequenza (fps)
  * @returns 
  */
-export function calcStartSeconds(frameIn: number, timeBase: number): number{
-    return frameIn/timeBase;
+export function convertFrameToSeconds(frame: number, timeBase: number): number{
+    return frame/timeBase;
 }
 
 
